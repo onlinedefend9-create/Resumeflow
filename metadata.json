@@ -1,0 +1,6 @@
+{
+  "name": "ResumeFlow",
+  "description": "Global Resume & CV Builder for fast, ATS-friendly professional resumes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
