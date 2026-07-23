@@ -31,6 +31,7 @@ export const Footer = () => {
           <Link to="/cv-templates" className="hover:text-[#0a0a0a] transition-colors">{t.nav.templates}</Link>
           <Link to="/blog" className="hover:text-[#0a0a0a] transition-colors">{t.nav.blog}</Link>
           <Link to="/pricing" className="hover:text-[#0a0a0a] transition-colors">{t.nav.pricing}</Link>
+          <Link to="/sitemap" className="hover:text-[#0a0a0a] transition-colors">Sitemap</Link>
           <Link to="/cv-generator" className="hover:text-blue-600 transition-colors font-semibold">{t.nav.createCv}</Link>
         </div>
       </div>

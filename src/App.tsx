@@ -13,6 +13,7 @@ import { Templates } from './pages/Templates';
 import { Pricing } from './pages/Pricing';
 import { Blog } from './pages/Blog';
 import { BlogPostDetail } from './pages/BlogPostDetail';
+import { SitemapPage } from './pages/SitemapPage';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 
@@ -32,6 +33,7 @@ export default function App() {
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/blog/:slug" element={<BlogPostDetail />} />
+                  <Route path="/sitemap" element={<SitemapPage />} />
                 </Routes>
               </main>
               <Footer />
