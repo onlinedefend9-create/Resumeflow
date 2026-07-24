@@ -67,7 +67,7 @@ export const Sidebar = ({ activeTab = 'sections', setActiveTab }: SidebarProps) 
   };
 
   return (
-    <aside className="w-80 bg-[#0a0a0a] text-white p-5 flex flex-col justify-between shrink-0 h-screen sticky top-0 overflow-y-auto border-r border-zinc-800/80">
+    <aside className="w-full lg:w-80 bg-[#0a0a0a] text-white p-4 sm:p-5 flex flex-col justify-between shrink-0 h-full lg:h-screen lg:sticky lg:top-0 overflow-y-auto border-r border-zinc-800/80">
       <div className="space-y-6">
         {/* Brand Header */}
         <div className="flex items-center justify-between px-1 pt-1">

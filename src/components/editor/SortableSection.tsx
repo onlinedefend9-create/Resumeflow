@@ -477,7 +477,7 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
       }`}
     >
       {/* Drag & Controls Overlay */}
-      <div className="no-print absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-white/95 backdrop-blur-md p-1 rounded-lg border border-zinc-200 shadow-sm z-10">
+      <div className="no-print absolute top-2 right-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-white/95 backdrop-blur-md p-1.5 rounded-lg border border-zinc-200 shadow-sm z-10">
         <button
           onClick={() => setIsEditingInline(!isEditingInline)}
           className="p-1 hover:bg-zinc-100 rounded text-zinc-600 hover:text-zinc-900 transition-colors"

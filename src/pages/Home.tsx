@@ -23,24 +23,24 @@ export const Home = () => {
       />
 
       {/* Hero Section */}
-      <section className="relative pt-24 pb-28 md:pt-36 md:pb-40 px-6 md:px-10 overflow-hidden">
+      <section className="relative pt-16 sm:pt-24 pb-20 sm:pb-28 md:pt-36 md:pb-40 px-4 sm:px-6 md:px-10 overflow-hidden">
         {/* Subtle Background Glow */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-blue-500/10 via-indigo-500/5 to-transparent blur-3xl rounded-full pointer-events-none -z-10" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[600px] h-[350px] bg-gradient-to-tr from-blue-500/10 via-indigo-500/5 to-transparent blur-3xl rounded-full pointer-events-none -z-10" />
 
-        <div className="max-w-5xl mx-auto text-center space-y-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-zinc-200 bg-zinc-50/80 backdrop-blur-md text-xs font-semibold text-zinc-700 shadow-sm">
+        <div className="max-w-5xl mx-auto text-center space-y-6 sm:space-y-8">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full border border-zinc-200 bg-zinc-50/80 backdrop-blur-md text-[11px] sm:text-xs font-semibold text-zinc-700 shadow-sm">
             <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
             {t.hero.badge}
           </div>
 
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-[#0a0a0a] leading-[1.08]">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-[#0a0a0a] leading-[1.12] sm:leading-[1.08]">
             {t.hero.titleLine1} <br className="hidden sm:block" />
             <span className="bg-gradient-to-r from-[#0a0a0a] via-blue-600 to-indigo-600 bg-clip-text text-transparent">
               {t.hero.titleLine2}
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-zinc-600 max-w-2xl mx-auto font-normal leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-zinc-600 max-w-2xl mx-auto font-normal leading-relaxed">
             {t.hero.subtitle}
           </p>
 

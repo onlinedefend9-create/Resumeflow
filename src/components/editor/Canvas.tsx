@@ -63,7 +63,7 @@ export const Canvas = () => {
       >
         <div
           id="cv-canvas"
-          className="bg-white shadow-[0_20px_60px_rgba(0,0,0,0.08)] border border-zinc-200/80 rounded-sm min-h-[297mm] w-full max-w-[210mm] mx-auto p-12 md:p-16 transition-all space-y-6 text-[#0a0a0a]"
+          className="bg-white shadow-[0_20px_60px_rgba(0,0,0,0.08)] border border-zinc-200/80 rounded-sm min-h-[297mm] w-full max-w-[210mm] mx-auto p-4 sm:p-8 md:p-12 lg:p-16 transition-all space-y-4 sm:space-y-6 text-[#0a0a0a]"
         >
           {data.sections.map((section) => (
             <SortableSection
