@@ -14,12 +14,12 @@ const getHtml2Pdf = () => {
   return null;
 };
 
-export const exportToPDF = async (elementId: string = 'cv-canvas', filename: string = 'resume.pdf') => {
+export const exportToPDF = async (elementId: string = 'cv-canvas', filename: string = 'resume.pdf'): Promise<string | null> => {
   const element = document.getElementById(elementId);
   if (!element) {
     console.error(`Element with id "${elementId}" not found`);
     window.print();
-    return;
+    return null;
   }
 
   // Add temporary print class to document body to hide non-printable widgets/buttons
@@ -43,14 +43,32 @@ export const exportToPDF = async (elementId: string = 'cv-canvas', filename: str
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as 'portrait' | 'landscape' }
       };
 
-      await html2pdf().set(opt).from(element).save();
+      // Generate Data URI of the PDF
+      const pdfDataUri = await html2pdf().set(opt).from(element).output('datauristring');
+
+      // Attempt to save file directly to disk
+      try {
+        await html2pdf().set(opt).from(element).save();
+      } catch (saveError) {
+        console.warn('Standard save failed, fallback to anchor tag download', saveError);
+        const link = document.createElement('a');
+        link.href = pdfDataUri;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      return pdfDataUri;
     } else {
       console.warn('html2pdf function not available, triggering browser print dialog');
       window.print();
+      return null;
     }
   } catch (error) {
     console.warn('html2pdf generation error, falling back to browser print:', error);
     window.print();
+    return null;
   } finally {
     document.body.classList.remove('exporting-pdf');
   }

@@ -41,3 +41,11 @@ export interface CVData {
   theme?: CVTheme;
 }
 
+export interface PDFExportItem {
+  id: string;
+  name: string;
+  date: string;
+  dataUri: string;
+}
+
+

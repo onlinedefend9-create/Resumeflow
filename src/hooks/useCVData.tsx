@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CVData, CVTheme, TemplateId } from '../types/cv';
+import { CVData, CVTheme, TemplateId, PDFExportItem } from '../types/cv';
 import { useLanguage } from '../i18n/LanguageContext';
 
 export interface CVContextType {
@@ -8,6 +8,9 @@ export interface CVContextType {
   setData: React.Dispatch<React.SetStateAction<CVData>>;
   loadLanguagePreset: (lang: string) => void;
   updateTheme: (newTheme: Partial<CVTheme>) => void;
+  exports: PDFExportItem[];
+  addExport: (name: string, dataUri: string) => void;
+  deleteExport: (id: string) => void;
 }
 
 const CVContext = createContext<CVContextType | undefined>(undefined);
@@ -402,6 +405,16 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [language]);
 
+  const [exports, setExports] = useState<PDFExportItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('cv_exports_history');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error('Error loading exports history:', e);
+      return [];
+    }
+  });
+
   const loadLanguagePreset = (lang: string) => {
     const preset = sampleCVsByLanguage[lang] || sampleCVsByLanguage.en;
     setData(prev => ({
@@ -421,8 +434,45 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }));
   };
 
+  const addExport = (name: string, dataUri: string) => {
+    try {
+      const newExport: PDFExportItem = {
+        id: Date.now().toString(),
+        name,
+        date: new Date().toLocaleString('fr-FR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        dataUri
+      };
+      setExports(prev => {
+        // Keep only last 3 exports to stay within localStorage storage quotas (5MB)
+        const updated = [newExport, ...prev].slice(0, 3);
+        localStorage.setItem('cv_exports_history', JSON.stringify(updated));
+        return updated;
+      });
+    } catch (e) {
+      console.error('Error adding PDF export to history:', e);
+    }
+  };
+
+  const deleteExport = (id: string) => {
+    try {
+      setExports(prev => {
+        const updated = prev.filter(item => item.id !== id);
+        localStorage.setItem('cv_exports_history', JSON.stringify(updated));
+        return updated;
+      });
+    } catch (e) {
+      console.error('Error deleting PDF export:', e);
+    }
+  };
+
   return (
-    <CVContext.Provider value={{ data, setData, loadLanguagePreset, updateTheme }}>
+    <CVContext.Provider value={{ data, setData, loadLanguagePreset, updateTheme, exports, addExport, deleteExport }}>
       {children}
     </CVContext.Provider>
   );

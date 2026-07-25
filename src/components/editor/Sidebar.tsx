@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Briefcase, GraduationCap, Award, FolderKanban, FileText, ArrowLeft, Palette, LayoutTemplate, Languages, Check, Sparkles, Zap } from 'lucide-react';
+import { Briefcase, GraduationCap, Award, FolderKanban, FileText, ArrowLeft, Palette, LayoutTemplate, Languages, Check, Sparkles, Zap, Download, Eye, X } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { useCVData } from '../../hooks/useCVData';
 import { TemplateId } from '../../types/cv';
@@ -11,7 +11,7 @@ interface SidebarProps {
 
 export const Sidebar = ({ activeTab = 'sections', setActiveTab }: SidebarProps) => {
   const { t, language, setLanguage } = useLanguage();
-  const { data, updateTheme, loadLanguagePreset } = useCVData();
+  const { data, updateTheme, loadLanguagePreset, exports, deleteExport } = useCVData();
 
   const sections = [
     { id: 'header', name: t.editor.headerSection, icon: FileText },
@@ -357,6 +357,53 @@ export const Sidebar = ({ activeTab = 'sections', setActiveTab }: SidebarProps) 
           </div>
         )}
       </div>
+
+      {/* PDF Export History */}
+      {exports && exports.length > 0 && (
+        <div className="pt-4 border-t border-zinc-800/80 px-1 space-y-2 mt-6">
+          <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+            <Download className="w-3.5 h-3.5 text-blue-500" />
+            <span>{language === 'fr' ? 'Exports PDF récents' : 'Recent PDF Exports'}</span>
+          </h3>
+          <div className="space-y-1.5 max-h-40 overflow-y-auto">
+            {exports.map((item) => (
+              <div key={item.id} className="p-2 bg-zinc-900/80 rounded-lg border border-zinc-800 flex flex-col gap-1 text-[11px] text-zinc-300">
+                <div className="flex items-center justify-between font-bold text-white">
+                  <span className="truncate max-w-[140px]">{item.name}</span>
+                  <span className="text-[9px] text-zinc-500 font-normal">{item.date}</span>
+                </div>
+                <div className="flex items-center gap-2 pt-1.5 border-t border-zinc-800/60">
+                  <a
+                    href={item.dataUri}
+                    download={item.name}
+                    className="flex-1 py-1 px-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold text-center transition-all cursor-pointer"
+                  >
+                    {language === 'fr' ? 'Télécharger' : 'Download'}
+                  </a>
+                  <button
+                    onClick={() => {
+                      const newTab = window.open();
+                      if (newTab) {
+                        newTab.document.write(`<iframe src="${item.dataUri}" style="width:100%; height:100%; border:none;"></iframe>`);
+                      }
+                    }}
+                    className="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-bold transition-all cursor-pointer"
+                  >
+                    {language === 'fr' ? 'Ouvrir' : 'Open'}
+                  </button>
+                  <button
+                    onClick={() => deleteExport(item.id)}
+                    className="p-1 hover:text-red-500 text-zinc-500 rounded transition-all cursor-pointer"
+                    title={language === 'fr' ? 'Supprimer' : 'Delete'}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Footer Auto-save status */}
       <div className="pt-4 border-t border-zinc-800/80 px-1 text-xs text-zinc-500 space-y-1 mt-6">
