@@ -2,7 +2,31 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SEO } from '../components/SEO';
 import { AdSlot } from '../components/AdSlot';
-import { Sparkles, ArrowRight, Eye, Check, X, FileText, Search, Palette, Star, SlidersHorizontal, ShieldCheck } from 'lucide-react';
+import {
+  Sparkles,
+  ArrowRight,
+  Eye,
+  X,
+  Search,
+  Palette,
+  Star,
+  ShieldCheck,
+  Briefcase,
+  GraduationCap,
+  Code,
+  UserCheck,
+  UserX,
+  Columns,
+  RotateCcw,
+  LayoutGrid,
+  Percent,
+  Check,
+  TrendingUp,
+  Download,
+  FileText,
+  BadgeAlert,
+  ThumbsUp
+} from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { TemplateId } from '../types/cv';
 import { TemplateMockup } from '../components/TemplateMockup';
@@ -15,247 +39,350 @@ export interface TemplateItem {
   description: string;
   color: string;
   badge?: string;
-  rating?: number;
-  downloads?: string;
+  rating: number;
+  downloads: string;
+  featured?: boolean;
+  hasPhoto: boolean;
+  columns: 1 | 2;
+  level: 'entry' | 'mid' | 'exec';
+  atsScore: number;
+  expertTips: {
+    sectors: string;
+    photoAdvice: string;
+    atsInsight: string;
+    proAdvice: string;
+  };
 }
 
 export const Templates = () => {
   const [filter, setFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [photoFilter, setPhotoFilter] = useState<'all' | 'photo' | 'nophoto'>('all');
+  const [columnFilter, setColumnFilter] = useState<'all' | '1' | '2'>('all');
+  const [levelFilter, setLevelFilter] = useState<'all' | 'entry' | 'mid' | 'exec'>('all');
+  const [sortBy, setSortBy] = useState<'popular' | 'rating' | 'ats'>('popular');
   const [selectedPreview, setSelectedPreview] = useState<TemplateItem | null>(null);
   const [cardColors, setCardColors] = useState<Record<string, string>>({});
+
   const { t, language } = useLanguage();
   const navigate = useNavigate();
 
   const colorPalette = [
-    '#2563eb', // Royal Blue
-    '#059669', // Emerald
-    '#f59e0b', // Amber/Gold
-    '#7c3aed', // Violet
-    '#e11d48', // Rose
-    '#18181b', // Obsidian Dark
+    { name: 'Bleu Canard / Teal', hex: '#087e8b' },
+    { name: 'Bleu Royal', hex: '#2563eb' },
+    { name: 'Émeraude', hex: '#059669' },
+    { name: 'Ambre Or', hex: '#d97706' },
+    { name: 'Violet Studio', hex: '#7c3aed' },
+    { name: 'Rose Rubis', hex: '#e11d48' },
+    { name: 'Obsidienne / Dark', hex: '#18181b' },
   ];
 
   const templatesList: TemplateItem[] = [
     {
       id: 'split_left',
-      name: 'Graphicforest Studio Dark',
+      name: 'Studio Pastel Français',
       category: 'design',
-      tag: 'Portfolio & Creative',
-      description: 'Format portefeuille moderne avec sidebar sombre, photo avatar encadrée d\'or et timeline d\'expérience à fort impact.',
-      color: '#f59e0b',
-      badge: 'Bestseller 2026',
-      rating: 4.9,
-      downloads: '14.2k'
+      tag: 'Canva Standard',
+      description: 'Format classique français à succès avec colonne latérale pastel, photo avatar circulaire et bandeau de poste teinté.',
+      color: '#087e8b',
+      badge: 'N°1 Bestseller',
+      rating: 5.0,
+      downloads: '64.2k',
+      featured: true,
+      hasPhoto: true,
+      columns: 2,
+      level: 'mid',
+      atsScore: 100,
+      expertTips: {
+        sectors: 'Marketing, Communication, Ressources Humaines, Secteur Public, PME françaises.',
+        photoAdvice: 'Fortement recommandée. La photo ronde s\'intègre harmonieusement avec la couleur d\'accent du profil.',
+        atsInsight: 'Structure 2 colonnes parfaitement compatible avec 98% des logiciels ATS français.',
+        proAdvice: 'La colonne de gauche colorée permet de structurer les compétences de façon très visuelle pour un recruteur pressé.'
+      }
     },
     {
       id: 'moderne',
-      name: 'Moderne Minimal',
+      name: 'Moderne Minimal Tech',
       category: 'tech',
-      tag: 'Tech & Product',
-      description: 'Design épuré en deux colonnes équilibrées. Idéal pour les profils Tech, Marketing, Produit et Startup.',
+      tag: 'Tech & Produit',
+      description: 'Design épuré en deux colonnes équilibrées. Idéal pour les profils Tech, Marketing et Startup.',
       color: '#2563eb',
       badge: 'Populaire',
-      rating: 4.8,
-      downloads: '22.8k'
+      rating: 4.9,
+      downloads: '42.8k',
+      featured: true,
+      hasPhoto: true,
+      columns: 2,
+      level: 'mid',
+      atsScore: 99,
+      expertTips: {
+        sectors: 'Informatique, Ingénierie, Management de Produit, Data Science, Startups innovantes.',
+        photoAdvice: 'Facultative. Si ajoutée, privilégiez un portrait pro avec arrière-plan neutre ou transparent.',
+        atsInsight: 'Format de grille moderne optimal. Très facilement scannable par les robots d\'acquisition.',
+        proAdvice: 'Utilisez les puces de compétences teintes pour lister vos technologies clés de façon structurée.'
+      }
+    },
+    {
+      id: 'international',
+      name: 'International Harvard ATS',
+      category: 'exec',
+      tag: 'Consulting & Strategy',
+      description: 'Format standardisé selon les normes des universités Ivy League et cabinets de conseil internationaux.',
+      color: '#18181b',
+      badge: 'Top ATS 100%',
+      rating: 5.0,
+      downloads: '51.2k',
+      featured: true,
+      hasPhoto: false,
+      columns: 1,
+      level: 'exec',
+      atsScore: 100,
+      expertTips: {
+        sectors: 'Finance, Conseil en stratégie, Gestion de fortune, Cabinets d\'audit (Big Four), postes à l\'international (US/UK).',
+        photoAdvice: 'Non recommandée. Les CV anglo-saxons proscrivent strictement la photo pour éviter les biais de recrutement.',
+        atsInsight: 'Score ATS maximal absolu de 100%. Aucune fioriture graphique, structure purement textuelle sérialisable.',
+        proAdvice: 'Focalisez-vous sur les résultats chiffrés et l\'impact de vos actions dans les puces d\'expériences.'
+      }
     },
     {
       id: 'classique',
-      name: 'Classique Exécutif',
+      name: 'Classique Exécutif Serif',
       category: 'business',
       tag: 'Finance & Legal',
       description: 'Mise en page sobre et structurée avec typographie serif raffinée, parfaite pour la Finance et le Conseil.',
       color: '#18181b',
       rating: 4.9,
-      downloads: '18.5k'
+      downloads: '18.5k',
+      hasPhoto: false,
+      columns: 1,
+      level: 'exec',
+      atsScore: 98,
+      expertTips: {
+        sectors: 'Secteur juridique, Cabinets d\'avocats, Immobilier d\'exception, Banques traditionnelles.',
+        photoAdvice: 'Généralement non recommandée, sauf exigence expresse du poste.',
+        atsInsight: 'Gros titres clairs, police Serif hautement qualifiée et décryptée.',
+        proAdvice: 'La typographie Serif confère une image d\'autorité, de rigueur académique et de classicisme de bon goût.'
+      }
     },
     {
       id: 'creatif',
       name: 'Créatif Studio Bold',
       category: 'design',
       tag: 'Design & Media',
-      description: 'Typographie affirmée et bandeau diagonal coloré pour les graphistes, directeurs artistiques et créatifs.',
-      color: '#8b5cf6',
-      badge: 'Tendance',
-      rating: 4.7,
-      downloads: '9.3k'
+      description: 'Typographie affirmée et bandeau coloré pour les graphistes, directeurs artistiques et créatifs.',
+      color: '#7c3aed',
+      rating: 4.8,
+      downloads: '14.3k',
+      hasPhoto: true,
+      columns: 2,
+      level: 'mid',
+      atsScore: 95,
+      expertTips: {
+        sectors: 'Publicité, Agences de communication, Design UX/UI, Création de contenu, Événementiel.',
+        photoAdvice: 'Recommandée. Ce modèle valorise la personnalité et l\'expression créative du candidat.',
+        atsInsight: 'Un peu plus complexe en raison du bloc d\'en-tête, mais structuré pour rester pleinement exploitable.',
+        proAdvice: 'Choisissez une couleur d\'accent de votre univers de marque personnel pour harmoniser le document.'
+      }
     },
     {
       id: 'minimal',
-      name: 'Ultra Minimal',
+      name: 'Ultra Minimal Single-Page',
       category: 'minimal',
-      tag: 'US & Global Standard',
+      tag: 'Global Standard',
       description: 'Focus 100% sur le texte et la hiérarchie de l\'information. Recommandé par les recruteurs internationaux.',
       color: '#3f3f46',
       rating: 4.9,
-      downloads: '31.0k'
+      downloads: '31.0k',
+      hasPhoto: false,
+      columns: 1,
+      level: 'entry',
+      atsScore: 100,
+      expertTips: {
+        sectors: 'Secteurs académiques, Administrations, Gestion administrative, Recrutement international général.',
+        photoAdvice: 'Non nécessaire. Structure optimisée pour les profils ne souhaitant pas exposer de photo.',
+        atsInsight: 'Excellent décryptage par tous les robots ATS du marché.',
+        proAdvice: 'Le design suisse asymétrique apporte une touche de modernité subtile sans aucun artifice lourd.'
+      }
     },
     {
       id: 'pro',
-      name: 'Professionnel Elite',
+      name: 'Professionnel Elite Header',
       category: 'exec',
-      tag: 'Executive & Management',
+      tag: 'Executive',
       description: 'Conçu avec bandeau supérieur immersif pour mettre en avant vos accomplissements majeurs.',
       color: '#2563eb',
       rating: 4.8,
-      downloads: '16.4k'
+      downloads: '16.4k',
+      hasPhoto: true,
+      columns: 2,
+      level: 'exec',
+      atsScore: 97,
+      expertTips: {
+        sectors: 'Direction générale, Management d\'équipes, Direction des Ressources Humaines, Logistique.',
+        photoAdvice: 'Recommandée. Le bandeau permet d\'insérer un portrait pro tout en conservant une structure rigoureuse.',
+        atsInsight: 'L\'en-tête de pleine largeur regroupe parfaitement le nom et le titre cible.',
+        proAdvice: 'Complétez la colonne de gauche avec vos soft skills clés (management, négociation, etc.).'
+      }
     },
     {
       id: 'tech_lead',
-      name: 'Tech Lead Grid',
+      name: 'Tech Lead Terminal Grid',
       category: 'tech',
       tag: 'Software & DevOps',
-      description: 'Mise en page style terminal avec badges de stack technique et grille de compétences interactives.',
+      description: 'Mise en page style terminal avec badges de stack technique et grille de compétences.',
       color: '#0284c7',
-      badge: 'Nouveau',
       rating: 4.9,
-      downloads: '11.1k'
+      downloads: '11.1k',
+      hasPhoto: false,
+      columns: 2,
+      level: 'mid',
+      atsScore: 98,
+      expertTips: {
+        sectors: 'Ingénierie DevOps, Administration de systèmes, Cloud Architecture, Cyber-sécurité.',
+        photoAdvice: 'Rarement utilisée. L\'esprit terminal de ce modèle privilégie les compétences pures.',
+        atsInsight: 'Grille de compétences hautement optimisable en mots-clés de langages et technos.',
+        proAdvice: 'Idéal pour lister votre expertise Cloud, vos lignes de commandes favorites ou vos dépôts open source.'
+      }
     },
     {
       id: 'nordic',
-      name: 'Nordic Clean',
+      name: 'Nordic Clean Architecture',
       category: 'minimal',
-      tag: 'Architecture & Design',
-      description: 'Inspiré du design scandinave avec une grille aérée, des marges généreuses et des tons neutres élégants.',
-      color: '#52525b',
+      tag: 'Architecture',
+      description: 'Inspiré du design scandinave avec une grille aérée et des tons neutres élégants.',
+      color: '#059669',
       rating: 4.8,
-      downloads: '8.7k'
+      downloads: '8.7k',
+      hasPhoto: false,
+      columns: 1,
+      level: 'mid',
+      atsScore: 99,
+      expertTips: {
+        sectors: 'Éco-conception, Architecture, Gestion de projets RSE, Secteur associatif, Développement durable.',
+        photoAdvice: 'Généralement non requise. S\'accorde avec la sobriété naturelle du design.',
+        atsInsight: 'Lignes séparatrices douces et grille à une colonne optimales pour l\'ATS.',
+        proAdvice: 'La palette verte forêt ou tons pierre naturelle convient magnifiquement à l\'identité nordique.'
+      }
     },
     {
       id: 'monochrome',
-      name: 'Monochrome Ink',
+      name: 'Monochrome Editorial Ink',
       category: 'minimal',
-      tag: 'Publishing & Media',
-      description: 'Style presse haut de gamme jouant sur les contrastes noirs et blancs purs pour un impact éditorial.',
-      color: '#09090b',
+      tag: 'Publishing',
+      description: 'Style presse haut de gamme jouant sur les contrastes noirs et blancs purs.',
+      color: '#18181b',
       rating: 4.7,
-      downloads: '7.2k'
+      downloads: '7.2k',
+      hasPhoto: false,
+      columns: 1,
+      level: 'mid',
+      atsScore: 100,
+      expertTips: {
+        sectors: 'Journalisme, Édition littéraire, Sciences humaines, Traduction, Rédaction de contenu.',
+        photoAdvice: 'Non recommandée pour préserver l\'aspect "presse écrite" et éditorial.',
+        atsInsight: 'Format ultra-conforme à l\'ATS grâce à la linéarité parfaite du flux textuel.',
+        proAdvice: 'La disposition en double colonne asymétrique textuelle est un régal à lire pour l\'œil humain.'
+      }
     },
     {
       id: 'vibrant',
-      name: 'Vibrant Pulse',
+      name: 'Vibrant Pulse Marketing',
       category: 'design',
-      tag: 'Marketing & Comms',
-      description: 'Accents de couleurs vives et titres dynamiques pour capter l\'attention des recruteurs dès la première seconde.',
-      color: '#d97706',
-      rating: 4.6,
-      downloads: '6.8k'
+      tag: 'Marketing',
+      description: 'Accents de couleurs vives et titres dynamiques pour capter l\'attention immédiatement.',
+      color: '#e11d48',
+      rating: 4.7,
+      downloads: '9.8k',
+      hasPhoto: true,
+      columns: 2,
+      level: 'mid',
+      atsScore: 96,
+      expertTips: {
+        sectors: 'Acquisition client (Growth), Social Media Management, Événementiel, Relations de presse.',
+        photoAdvice: 'Fortement conseillée pour valoriser un tempérament dynamique et avenant.',
+        atsInsight: 'Contient un pavé de statistiques clés idéal pour l\'accroche du recruteur.',
+        proAdvice: 'La barre de gauche en gras permet de guider l\'œil sur vos réalisations chiffrées majeures.'
+      }
     },
     {
       id: 'academic',
       name: 'Académique & Recherche',
       category: 'business',
       tag: 'PhD & Science',
-      description: 'Structure rigoureuse pour chercheurs, professeurs et scientifiques valorisant publications et doctorat.',
-      color: '#15803d',
+      description: 'Structure rigoureuse pour chercheurs, professeurs et scientifiques.',
+      color: '#059669',
       rating: 4.9,
-      downloads: '5.4k'
+      downloads: '6.4k',
+      hasPhoto: false,
+      columns: 1,
+      level: 'exec',
+      atsScore: 100,
+      expertTips: {
+        sectors: 'Recherche publique, Universités, Thèses de doctorat, R&D en grandes entreprises.',
+        photoAdvice: 'Non requise dans le milieu académique classique.',
+        atsInsight: 'Modèle 100% conforme pour le référencement des publications scientifiques et brevets.',
+        proAdvice: 'Structurez clairement la liste chronologique de vos papiers de recherche et distinctions.'
+      }
     },
-    {
-      id: 'startup',
-      name: 'Startup Founder',
-      category: 'tech',
-      tag: 'Entrepreneurs & Scaleup',
-      description: 'Présentation orientée résultats, métriques d\'impact (ARR, Users) et projets à forte croissance.',
-      color: '#ec4899',
-      badge: 'Inspiration',
-      rating: 4.8,
-      downloads: '12.9k'
-    },
-    {
-      id: 'international',
-      name: 'International Harvard',
-      category: 'exec',
-      tag: 'Consulting & Strategy',
-      description: 'Format rigoureusement standardisé selon les normes des universités Ivy League et cabinets de conseil.',
-      color: '#1e3a8a',
-      badge: 'Recommandé ATS',
-      rating: 5.0,
-      downloads: '45.1k'
-    },
-    {
-      id: 'luxure',
-      name: 'Luxury Atelier',
-      category: 'design',
-      tag: 'Fashion & Hospitality',
-      description: 'Typographie sérif sophistiquée et monogramme raffiné pour le luxe, la mode et l\'hôtellerie haut de gamme.',
-      color: '#78350f',
-      rating: 4.9,
-      downloads: '8.1k'
-    },
-    {
-      id: 'medical',
-      name: 'Santé & Médical',
-      category: 'business',
-      tag: 'Healthcare & Pharma',
-      description: 'Lignes épurées et structurées adaptées aux médecins, infirmiers, pharmaciens et professionnels de santé.',
-      color: '#0d9488',
-      rating: 4.9,
-      downloads: '10.3k'
-    },
-    {
-      id: 'legal',
-      name: 'Juridique Avocat',
-      category: 'business',
-      tag: 'Droit & Corporate',
-      description: 'Mise en page formelle et solennelle en bleu marine et or, valorisant la formation et le barreau.',
-      color: '#312e81',
-      rating: 4.9,
-      downloads: '9.0k'
-    },
-    {
-      id: 'compact',
-      name: 'Dense One-Page',
-      category: 'minimal',
-      tag: 'Profils d\'Expérience',
-      description: 'Optimisation maximale de l\'espace pour faire tenir 10+ ans de carrière sur une seule page fluide.',
-      color: '#475569',
-      rating: 4.8,
-      downloads: '19.7k'
-    },
-    {
-      id: 'elegant_serif',
-      name: 'Élégant Serif',
-      category: 'design',
-      tag: 'Arts & Culture',
-      description: 'Un charme classique revisité avec une police serif raffinée pour les métiers littéraires et culturels.',
-      color: '#701a75',
-      rating: 4.7,
-      downloads: '6.1k'
-    },
-    {
-      id: 'bold_header',
-      name: 'Header Impactful',
-      category: 'exec',
-      tag: 'Sales & Business Dev',
-      description: 'Bandeau supérieur immersif et puissant pour marquer l\'esprit avec une accroche commerciale forte.',
-      color: '#b91c1c',
-      rating: 4.8,
-      downloads: '13.2k'
-    },
-    {
-      id: 'modern_timeline',
-      name: 'Chronologique Modern',
-      category: 'exec',
-      tag: 'Project Managers',
-      description: 'Ligne du temps fluide reliée par des puces pour retracer la progression de carrière avec clarté.',
-      color: '#0369a1',
-      rating: 4.9,
-      downloads: '15.8k'
-    }
   ];
 
-  const filteredTemplates = templatesList.filter(item => {
-    const matchesCategory = filter === 'all' || item.category === filter;
-    const matchesSearch = searchQuery.trim() === '' ||
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.tag.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const industryCategories = [
+    { id: 'all', label: 'Tous les Modèles', icon: LayoutGrid },
+    { id: 'tech', label: 'Tech & Produit', icon: Code },
+    { id: 'business', label: 'Finance & Conseil', icon: Briefcase },
+    { id: 'design', label: 'Design & Créatif', icon: Palette },
+    { id: 'minimal', label: 'Minimal & ATS', icon: ShieldCheck },
+    { id: 'exec', label: 'Executive & Cadres', icon: GraduationCap },
+  ];
+
+  const activeFiltersCount =
+    (filter !== 'all' ? 1 : 0) +
+    (photoFilter !== 'all' ? 1 : 0) +
+    (columnFilter !== 'all' ? 1 : 0) +
+    (levelFilter !== 'all' ? 1 : 0) +
+    (searchQuery.trim() !== '' ? 1 : 0);
+
+  const resetAllFilters = () => {
+    setFilter('all');
+    setPhotoFilter('all');
+    setColumnFilter('all');
+    setLevelFilter('all');
+    setSearchQuery('');
+  };
+
+  const filteredTemplates = templatesList
+    .filter(item => {
+      const matchesCategory = filter === 'all' || item.category === filter;
+      const matchesSearch = searchQuery.trim() === '' ||
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.tag.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesPhoto =
+        photoFilter === 'all' ||
+        (photoFilter === 'photo' && item.hasPhoto) ||
+        (photoFilter === 'nophoto' && !item.hasPhoto);
+
+      const matchesColumns =
+        columnFilter === 'all' ||
+        (columnFilter === '1' && item.columns === 1) ||
+        (columnFilter === '2' && item.columns === 2);
+
+      const matchesLevel =
+        levelFilter === 'all' || item.level === levelFilter;
+
+      return matchesCategory && matchesSearch && matchesPhoto && matchesColumns && matchesLevel;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'rating') return b.rating - a.rating;
+      if (sortBy === 'ats') return b.atsScore - a.atsScore;
+      const numA = parseFloat(a.downloads.replace('k', '')) || 0;
+      const numB = parseFloat(b.downloads.replace('k', '')) || 0;
+      return numB - numA;
+    });
 
   const handleUseTemplate = (templateId: TemplateId) => {
-    const color = cardColors[templateId] || templatesList.find(t => t.id === templateId)?.color || '#2563eb';
+    const color = cardColors[templateId] || templatesList.find(t => t.id === templateId)?.color || '#087e8b';
     navigate(`/cv-generator?template=${templateId}&color=${encodeURIComponent(color)}&lang=${language}`);
   };
 
@@ -265,281 +392,516 @@ export const Templates = () => {
   };
 
   return (
-    <div className="py-12 md:py-20 px-6 md:px-10 max-w-7xl mx-auto space-y-12">
+    <div className="py-10 px-4 sm:px-6 md:px-8 max-w-7xl mx-auto space-y-12 bg-zinc-50/20 selection:bg-cyan-500/10 selection:text-cyan-700">
       <SEO
-        title={`${t.templates.title} | CVCraft`}
+        title={`${t.templates.title} | ResumeFlow - Modèles de CV Professionnels`}
         description={t.templates.subtitle}
       />
 
-      {/* Header Banner */}
-      <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-zinc-200 bg-zinc-50/80 backdrop-blur-md text-xs font-semibold text-zinc-700 shadow-xs">
-          <Sparkles className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
-          <span>{t.templates.headerBadge}</span>
-        </div>
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#0a0a0a] leading-tight">
-          {t.templates.headerTitle1} <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">{t.templates.headerTitle2}</span>
+      {/* Hero Header Section matching cvdesignr.com/fr */}
+      <div className="text-center max-w-3xl mx-auto space-y-4 pt-4">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-50 border border-cyan-200 text-cyan-700 text-xs font-bold shadow-2xs">
+          <Sparkles className="w-3.5 h-3.5" />
+          Modèles de CV à remplir en ligne
+        </span>
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-zinc-950 tracking-tight leading-none">
+          Choisissez votre modèle de CV
         </h1>
-        <p className="text-zinc-600 text-base md:text-lg max-w-2xl mx-auto font-normal">
-          {t.templates.headerSubtitle}
+        <p className="text-sm sm:text-base text-zinc-600 leading-relaxed font-medium">
+          Sélectionnez un modèle de CV parmi notre collection professionnelle validée par des recruteurs. Personnalisez l'accent de couleur et commencez à rédiger instantanément.
         </p>
+
+        {/* Dynamic Social Proof stats */}
+        <div className="pt-4 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs text-zinc-500 font-bold">
+          <div className="flex items-center gap-1.5">
+            <Check className="w-4 h-4 text-cyan-600 stroke-[3px]" />
+            <span>100% Modifiables en ligne</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Check className="w-4 h-4 text-cyan-600 stroke-[3px]" />
+            <span>Normes ATS 2026</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Check className="w-4 h-4 text-cyan-600 stroke-[3px]" />
+            <span>Export PDF vectoriel haute fidélité</span>
+          </div>
+        </div>
       </div>
 
-      {/* Search & Filter Controls */}
-      <div className="bg-white rounded-2xl border border-zinc-200 p-4 shadow-sm space-y-4">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          {/* Search Bar */}
-          <div className="relative w-full md:w-80">
-            <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher un modèle (ex: Tech, Harvard, Avocat...)"
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-xs text-zinc-900 placeholder:text-zinc-400 font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+      {/* Featured Bestseller Showroom Panel */}
+      <div className="bg-zinc-950 text-white rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-xl space-y-6">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10 border-b border-zinc-800 pb-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-400 text-[10px] font-black tracking-wider uppercase">
+              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+              SÉLECTION STAR CVDesignr
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+              Les Templates Plébiscités en France
+            </h2>
+          </div>
+          <p className="text-zinc-400 text-xs max-w-sm leading-relaxed">
+            Ces modèles obtiennent le plus haut taux de retour positif de la part des grands cabinets de recrutement et startups en 2026.
+          </p>
+        </div>
+
+        {/* 3 Premium Featured Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+          {templatesList.filter(t => t.featured).slice(0, 3).map(tpl => {
+            const currentAccentColor = cardColors[tpl.id] || tpl.color;
+            return (
+              <div
+                key={tpl.id}
+                className="group bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden shadow-lg hover:border-cyan-500/50 transition-all duration-300 flex flex-col justify-between"
               >
-                <X className="w-3.5 h-3.5" />
+                {/* Upper bar */}
+                <div className="px-4 py-2.5 flex items-center justify-between border-b border-zinc-800 bg-zinc-950/40">
+                  <span className="px-2 py-0.5 bg-zinc-800 text-zinc-300 border border-zinc-700 text-[9px] font-extrabold uppercase tracking-wider rounded">
+                    {tpl.badge || tpl.tag}
+                  </span>
+                  <span className="text-[9px] font-mono font-bold text-emerald-400">ATS {tpl.atsScore}%</span>
+                </div>
+
+                {/* Simulated Paper Wrapper with gradient base */}
+                <div className="p-4 bg-zinc-950/20 flex flex-col items-center justify-center relative">
+                  <div className="w-full aspect-[210/297] rounded shadow-xl border border-zinc-800 bg-white overflow-hidden relative group-hover:scale-[1.015] transition-transform duration-300">
+                    <TemplateMockup
+                      templateId={tpl.id}
+                      color={currentAccentColor}
+                    />
+                  </div>
+
+                  {/* Interactive Swatches on Hero Cards */}
+                  <div className="w-full flex items-center justify-between pt-3.5 mt-3 border-t border-zinc-800/80">
+                    <span className="text-[10px] font-bold text-zinc-400">Teinte :</span>
+                    <div className="flex items-center gap-1">
+                      {colorPalette.slice(0, 5).map(c => (
+                        <button
+                          key={c.hex}
+                          onClick={(e) => handleColorChange(tpl.id, c.hex, e)}
+                          className={`w-3.5 h-3.5 rounded-full border transition-all cursor-pointer ${
+                            currentAccentColor === c.hex ? 'scale-125 border-white shadow-md ring-2 ring-cyan-500/50' : 'border-zinc-800 hover:scale-115'
+                          }`}
+                          style={{ backgroundColor: c.hex }}
+                          title={c.name}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Info details & Primary Button */}
+                <div className="p-4 space-y-2 bg-zinc-900 border-t border-zinc-850">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-black text-white">{tpl.name}</h3>
+                    <span className="text-[9px] text-zinc-500 font-mono">{tpl.downloads} DL</span>
+                  </div>
+                  <button
+                    onClick={() => handleUseTemplate(tpl.id)}
+                    className="w-full py-2.5 px-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow transition-all"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Personnaliser ce modèle
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Catalog Grid Area & Live Advanced Sidebar Filters */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 pt-4">
+        
+        {/* Left Side Filter Column - Sleek CVDesignr Sidebar Design */}
+        <div className="lg:col-span-1 space-y-5 bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-sm h-fit">
+          <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+            <span className="text-xs font-black text-zinc-950 uppercase tracking-wider flex items-center gap-1.5">
+              <Palette className="w-4 h-4 text-zinc-500" />
+              Filtres de recherche
+            </span>
+            {activeFiltersCount > 0 && (
+              <button
+                onClick={resetAllFilters}
+                className="text-[11px] font-bold text-cyan-600 hover:text-cyan-700 flex items-center gap-1 cursor-pointer"
+              >
+                <RotateCcw className="w-3 h-3" />
+                Effacer
               </button>
             )}
           </div>
 
-          {/* Categories Bar */}
-          <div className="flex flex-wrap items-center justify-center gap-1.5 w-full md:w-auto">
-            {[
-              { id: 'all', label: `${t.templates.filterAll} (${templatesList.length})` },
-              { id: 'tech', label: t.templates.filterTech },
-              { id: 'business', label: t.templates.filterBusiness },
-              { id: 'design', label: t.templates.filterDesign },
-              { id: 'minimal', label: t.templates.filterMinimal },
-              { id: 'exec', label: t.templates.filterExec }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setFilter(tab.id)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
-                  filter === tab.id
-                    ? 'bg-[#0a0a0a] text-white shadow-md'
-                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          {/* Quick text search */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase text-zinc-500">Mots-clés / Métier</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Ex : Tech, Manager, Juriste..."
+                className="w-full pl-8 pr-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-xs text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-950 font-medium placeholder:text-zinc-400"
+              />
+            </div>
+          </div>
+
+          {/* Secteurs d'activité */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase text-zinc-500">Secteur / Univers</label>
+            <div className="flex flex-col gap-1">
+              {industryCategories.map(cat => {
+                const Icon = cat.icon;
+                const isCurrent = filter === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setFilter(cat.id)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                      isCurrent 
+                        ? 'bg-zinc-900 text-white shadow-xs' 
+                        : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
+                    }`}
+                  >
+                    <Icon className={`w-3.5 h-3.5 ${isCurrent ? 'text-cyan-400' : 'text-zinc-400'}`} />
+                    <span>{cat.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Photo filter */}
+          <div className="space-y-1.5 pt-2 border-t border-zinc-100">
+            <label className="text-[10px] font-black uppercase text-zinc-500">Photo d'identité</label>
+            <select
+              value={photoFilter}
+              onChange={(e) => setPhotoFilter(e.target.value as any)}
+              className="w-full py-2 px-3 bg-zinc-50 border border-zinc-200 rounded-lg text-xs font-bold text-zinc-700 focus:outline-none focus:ring-1 focus:ring-zinc-950 cursor-pointer"
+            >
+              <option value="all">Peu importe</option>
+              <option value="photo">Avec cadre photo</option>
+              <option value="nophoto">Sans cadre photo (ATS)</option>
+            </select>
+          </div>
+
+          {/* Layout Structure */}
+          <div className="space-y-1.5 pt-2 border-t border-zinc-100">
+            <label className="text-[10px] font-black uppercase text-zinc-500">Colonnes</label>
+            <select
+              value={columnFilter}
+              onChange={(e) => setColumnFilter(e.target.value as any)}
+              className="w-full py-2 px-3 bg-zinc-50 border border-zinc-200 rounded-lg text-xs font-bold text-zinc-700 focus:outline-none focus:ring-1 focus:ring-zinc-950 cursor-pointer"
+            >
+              <option value="all">Toutes les structures</option>
+              <option value="1">1 Colonne (Traditionnel / US)</option>
+              <option value="2">2 Colonnes (Asymétrique / Actuel)</option>
+            </select>
+          </div>
+
+          {/* Level Experience */}
+          <div className="space-y-1.5 pt-2 border-t border-zinc-100">
+            <label className="text-[10px] font-black uppercase text-zinc-500">Expérience cible</label>
+            <select
+              value={levelFilter}
+              onChange={(e) => setLevelFilter(e.target.value as any)}
+              className="w-full py-2 px-3 bg-zinc-50 border border-zinc-200 rounded-lg text-xs font-bold text-zinc-700 focus:outline-none focus:ring-1 focus:ring-zinc-950 cursor-pointer"
+            >
+              <option value="all">Tous niveaux</option>
+              <option value="entry">Junior (0-2 ans)</option>
+              <option value="mid">Intermédiaire / Senior</option>
+              <option value="exec">Cadre / Executive</option>
+            </select>
+          </div>
+
+          {/* Sorting */}
+          <div className="space-y-1.5 pt-2 border-t border-zinc-100">
+            <label className="text-[10px] font-black uppercase text-zinc-500">Trier par</label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="w-full py-2 px-3 bg-zinc-50 border border-zinc-200 rounded-lg text-xs font-bold text-zinc-700 focus:outline-none focus:ring-1 focus:ring-zinc-950 cursor-pointer"
+            >
+              <option value="popular">Popularité globale</option>
+              <option value="rating">Meilleures notes (5.0)</option>
+              <option value="ats">Score ATS maximal</option>
+            </select>
           </div>
         </div>
-      </div>
 
-      {/* Templates Catalog Grid - Studio Artistic Rendering */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {filteredTemplates.map(tpl => {
-          const currentAccentColor = cardColors[tpl.id] || tpl.color;
+        {/* Right Side Catalog Cards Grid - 3 columns inside the sub-grid */}
+        <div className="lg:col-span-3 space-y-6">
+          <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-zinc-200/80 shadow-2xs">
+            <span className="text-xs font-bold text-zinc-500">
+              <strong className="text-zinc-900 font-extrabold">{filteredTemplates.length}</strong> modèles disponibles correspondants
+            </span>
+            <span className="text-xs font-mono text-zinc-400 hidden sm:inline">ResumeFlow v1.5 • 2026</span>
+          </div>
 
-          return (
-            <div
-              key={tpl.id}
-              className="group relative rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-xs hover:shadow-2xl hover:border-blue-500/50 transition-all duration-300 flex flex-col justify-between"
-            >
-              {/* Top Badge & Category Header */}
-              <div className="px-5 pt-4 pb-2 flex items-center justify-between border-b border-zinc-100 bg-zinc-50/60">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="inline-block px-3 py-1 bg-white border border-zinc-200 text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-2xs"
-                    style={{ color: currentAccentColor }}
-                  >
-                    {tpl.tag}
-                  </span>
-                  {tpl.badge && (
-                    <span className="px-2.5 py-0.5 bg-amber-400 text-zinc-950 font-extrabold text-[9px] uppercase tracking-wider rounded-full shadow-2xs">
-                      {tpl.badge}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1 text-[11px] font-bold text-zinc-700">
-                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                  <span>{tpl.rating}</span>
-                </div>
+          {filteredTemplates.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-zinc-200 p-12 text-center space-y-4">
+              <div className="w-12 h-12 bg-zinc-100 text-zinc-400 rounded-full flex items-center justify-center mx-auto">
+                <Search className="w-6 h-6" />
               </div>
-
-              {/* Studio Backdrop Container */}
-              <div className="p-5 bg-gradient-to-b from-[#e2e8f0] to-[#cbd5e1] relative flex flex-col items-center justify-center group-hover:from-[#cbd5e1] group-hover:to-[#94a3b8] transition-colors">
-                
-                {/* Header Tagline */}
-                <div className="w-full flex items-center justify-between mb-2 text-[9px] font-extrabold uppercase tracking-widest text-zinc-600">
-                  <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-blue-600" /> ATS 100% OK</span>
-                  <span className="flex items-center gap-1"><FileText className="w-3 h-3 text-zinc-700" /> VECTOR PDF</span>
-                </div>
-
-                {/* 3D Realistic CV Paper Document Container */}
-                <div className="w-full aspect-[210/297] rounded-xs shadow-2xl shadow-zinc-900/40 border border-zinc-300/80 overflow-hidden relative group-hover:scale-[1.02] transition-transform duration-300">
-                  <TemplateMockup
-                    templateId={tpl.id}
-                    color={currentAccentColor}
-                  />
-                </div>
-
-                {/* Interactive Color Switcher Bar On Card */}
-                <div className="w-full flex items-center justify-between pt-3 mt-3 border-t border-zinc-300/80">
-                  <div className="flex items-center gap-1.5">
-                    <Palette className="w-3 h-3 text-zinc-600" />
-                    <span className="text-[10px] font-bold text-zinc-700">Couleurs:</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {colorPalette.map(c => (
-                      <button
-                        key={c}
-                        onClick={(e) => handleColorChange(tpl.id, c, e)}
-                        className={`w-4 h-4 rounded-full border transition-all ${
-                          currentAccentColor === c ? 'scale-125 border-zinc-900 shadow-sm' : 'border-white hover:scale-110'
-                        }`}
-                        style={{ backgroundColor: c }}
-                        title="Changer la couleur d'accentuation"
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Hover Action Overlay */}
-                <div className="absolute inset-0 bg-zinc-950/80 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-6 gap-3 z-10">
-                  <button
-                    onClick={() => handleUseTemplate(tpl.id)}
-                    className="btn-premium btn-primary text-xs font-bold px-7 py-3 flex items-center gap-2 shadow-lg w-full max-w-[200px] justify-center"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    {t.templates.useTemplate}
-                  </button>
-                  <button
-                    onClick={() => setSelectedPreview(tpl)}
-                    className="px-6 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs transition-colors flex items-center gap-2 w-full max-w-[200px] justify-center border border-white/20"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    {t.templates.preview}
-                  </button>
-                </div>
-              </div>
-
-              {/* Card Footer Info */}
-              <div className="p-5 space-y-3 bg-white">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-extrabold text-[#0a0a0a]">
-                    {tpl.name}
-                  </h3>
-                  <span className="text-xs font-mono text-zinc-400">{tpl.downloads} DL</span>
-                </div>
-                <p className="text-xs text-zinc-600 leading-relaxed line-clamp-2">
-                  {tpl.description}
-                </p>
-                <div className="pt-1">
-                  <button
-                    onClick={() => handleUseTemplate(tpl.id)}
-                    className="w-full btn-premium btn-primary text-xs font-bold py-2.5 flex items-center justify-center gap-2"
-                  >
-                    {t.templates.useTemplate} <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
+              <h3 className="text-base font-black text-zinc-900">Aucun modèle ne correspond à vos filtres</h3>
+              <p className="text-xs text-zinc-500 max-w-sm mx-auto">
+                Essayez d'élargir votre recherche en réinitialisant certains filtres ou en saisissant un mot-clé générique.
+              </p>
+              <button
+                onClick={resetAllFilters}
+                className="px-4 py-2 bg-zinc-900 text-white rounded-lg text-xs font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                Réinitialiser les filtres
+              </button>
             </div>
-          );
-        })}
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTemplates.map(tpl => {
+                const currentAccentColor = cardColors[tpl.id] || tpl.color;
+
+                return (
+                  <div
+                    key={tpl.id}
+                    className="group bg-white rounded-2xl border border-zinc-200/95 overflow-hidden shadow-2xs hover:shadow-lg hover:border-cyan-500/40 transition-all duration-300 flex flex-col justify-between"
+                  >
+                    {/* Header badge area */}
+                    <div className="px-4 py-2.5 flex items-center justify-between border-b border-zinc-100 bg-zinc-50/50">
+                      <span className="px-2 py-0.5 bg-white border border-zinc-150 text-[9px] font-black uppercase text-zinc-700 tracking-wider rounded">
+                        {tpl.tag}
+                      </span>
+                      <div className="flex items-center gap-1.5 text-[9px] font-bold text-zinc-600">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 stroke-0" />
+                        <span>{tpl.rating}</span>
+                      </div>
+                    </div>
+
+                    {/* Interactive visual mockup block with swatches */}
+                    <div className="p-4 bg-zinc-50/60 relative flex flex-col items-center justify-center border-b border-zinc-100 group-hover:bg-zinc-50 transition-colors">
+                      {/* Meta badge tags inside the visual card */}
+                      <div className="w-full flex items-center justify-between mb-2.5 text-[9px] font-black uppercase tracking-wider text-zinc-500 z-10">
+                        <span className="px-1.5 py-0.5 bg-white/90 rounded border border-zinc-100 shadow-2xs flex items-center gap-1">
+                          {tpl.hasPhoto ? <UserCheck className="w-2.5 h-2.5 text-cyan-600" /> : <UserX className="w-2.5 h-2.5 text-zinc-400" />}
+                          {tpl.hasPhoto ? 'Avec photo' : 'Sans photo'}
+                        </span>
+                        <span className="px-1.5 py-0.5 bg-white/90 rounded border border-zinc-100 shadow-2xs flex items-center gap-1">
+                          <Columns className="w-2.5 h-2.5 text-violet-600" />
+                          {tpl.columns} {tpl.columns > 1 ? 'Colonnes' : 'Colonne'}
+                        </span>
+                      </div>
+
+                      {/* Mockup A4 document display */}
+                      <div className="w-full aspect-[210/297] rounded shadow border border-zinc-200 bg-white overflow-hidden relative group-hover:scale-[1.02] transition-transform duration-300">
+                        <TemplateMockup
+                          templateId={tpl.id}
+                          color={currentAccentColor}
+                        />
+                      </div>
+
+                      {/* Accent color picker dots sit securely inside the block (Z-20 absolute for hover clickability) */}
+                      <div className="w-full flex items-center justify-between pt-2.5 mt-2.5 border-t border-zinc-200/50 z-20 relative">
+                        <span className="text-[9px] font-bold text-zinc-400">Accent :</span>
+                        <div className="flex items-center gap-1">
+                          {colorPalette.map(c => (
+                            <button
+                              key={c.hex}
+                              onClick={(e) => handleColorChange(tpl.id, c.hex, e)}
+                              className={`w-3.5 h-3.5 rounded-full border transition-all cursor-pointer ${
+                                currentAccentColor === c.hex
+                                  ? 'scale-125 border-zinc-900 shadow-md ring-1 ring-cyan-500/30'
+                                  : 'border-white hover:scale-110'
+                              }`}
+                              style={{ backgroundColor: c.hex }}
+                              title={c.name}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Immersive hover CTA overlay strictly for A4 visual body preview */}
+                      <div className="absolute inset-x-0 top-0 bottom-12 bg-zinc-950/80 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4 gap-2 z-10">
+                        <button
+                          onClick={() => handleUseTemplate(tpl.id)}
+                          className="w-full max-w-[160px] py-2 px-4 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs shadow flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          Choisir
+                        </button>
+                        <button
+                          onClick={() => setSelectedPreview(tpl)}
+                          className="w-full max-w-[160px] py-2 px-4 rounded-lg bg-white/20 hover:bg-white/30 text-white font-semibold text-xs border border-white/25 flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          Aperçu d'expert
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Bottom info section */}
+                    <div className="p-4 space-y-2.5 bg-white">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-xs font-black text-zinc-900 group-hover:text-cyan-700 transition-colors leading-tight">
+                          {tpl.name}
+                        </h3>
+                        <span className="text-[9px] font-mono font-bold text-zinc-400 shrink-0 bg-zinc-150 px-1 rounded">
+                          {tpl.downloads} DL
+                        </span>
+                      </div>
+
+                      <p className="text-[10px] text-zinc-500 leading-normal line-clamp-2 font-medium">
+                        {tpl.description}
+                      </p>
+
+                      <div className="pt-1">
+                        <button
+                          onClick={() => handleUseTemplate(tpl.id)}
+                          className="w-full py-2.5 px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-black text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs hover:shadow transition-all"
+                        >
+                          <span>Rédiger mon CV</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       <AdSlot />
 
-      {/* Full-Screen Zoomed Interactive Preview Modal */}
+      {/* Fully Expanded Modal Preview - Inspired by CVDesignr's top-end advice & preview dashboard */}
       {selectedPreview && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative border border-zinc-200 my-auto">
-            {/* Close Button */}
+        <div className="fixed inset-0 z-50 bg-zinc-950/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-4xl w-full p-4 sm:p-8 space-y-6 shadow-2xl relative max-h-[95vh] overflow-y-auto">
+            {/* Close button */}
             <button
               onClick={() => setSelectedPreview(null)}
-              className="absolute top-5 right-5 w-10 h-10 rounded-full bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center text-zinc-600 transition-colors z-20"
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 w-9 h-9 rounded-full bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center text-zinc-700 cursor-pointer transition-colors"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
-            <div className="flex flex-col md:flex-row gap-8 items-center">
-              {/* Zoom Preview Canvas */}
-              <div className="w-full md:w-1/2 bg-[#cbd5e1] p-5 rounded-2xl border border-zinc-300 shadow-inner flex flex-col items-center">
-                <div className="w-full aspect-[210/297] max-w-[320px] bg-white rounded-xs shadow-2xl overflow-hidden relative">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+              
+              {/* Left Column (5/12 span): Mockup Display with Live color switching */}
+              <div className="md:col-span-5 bg-gradient-to-tr from-slate-100 via-slate-200 to-slate-300 p-5 rounded-2xl flex flex-col items-center justify-center border border-slate-200/60 shadow-inner">
+                <div className="w-full aspect-[210/297] max-w-[270px] bg-white rounded shadow-2xl overflow-hidden relative border border-zinc-300">
                   <TemplateMockup
                     templateId={selectedPreview.id}
                     color={cardColors[selectedPreview.id] || selectedPreview.color}
                     isExpanded={true}
                   />
                 </div>
-              </div>
 
-              {/* Information & Actions */}
-              <div className="w-full md:w-1/2 space-y-6 text-left">
-                <div className="space-y-2">
-                  <span className="px-3.5 py-1.5 rounded-full border border-zinc-200 bg-zinc-50 text-xs font-bold uppercase tracking-wider" style={{ color: cardColors[selectedPreview.id] || selectedPreview.color }}>
-                    {selectedPreview.tag}
+                {/* Direct Color Control in Full Preview Modal */}
+                <div className="w-full mt-4 bg-white/90 backdrop-blur-xs p-3 rounded-xl border border-zinc-200/80 shadow-sm space-y-2">
+                  <span className="text-[10px] font-black uppercase text-zinc-800 flex items-center gap-1">
+                    <Palette className="w-3.5 h-3.5 text-cyan-600" />
+                    Accent de couleur en temps réel :
                   </span>
-
-                  <h3 className="text-3xl font-extrabold text-[#0a0a0a]">
-                    {selectedPreview.name}
-                  </h3>
-                </div>
-
-                <p className="text-sm text-zinc-600 leading-relaxed">
-                  {selectedPreview.description}
-                </p>
-
-                {/* Color Chooser in Modal */}
-                <div className="space-y-2 border-t border-zinc-100 pt-4">
-                  <label className="text-xs font-bold text-zinc-800 flex items-center gap-1.5">
-                    <Palette className="w-4 h-4 text-blue-600" />
-                    Personnaliser la couleur d'accentuation:
-                  </label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-center gap-1.5">
                     {colorPalette.map(c => (
                       <button
-                        key={c}
-                        onClick={(e) => handleColorChange(selectedPreview.id, c, e)}
-                        className={`w-7 h-7 rounded-full border-2 transition-all ${
-                          (cardColors[selectedPreview.id] || selectedPreview.color) === c
-                            ? 'scale-110 border-zinc-900 shadow-md ring-2 ring-blue-500/20'
+                        key={c.hex}
+                        onClick={(e) => handleColorChange(selectedPreview.id, c.hex, e)}
+                        className={`w-6 h-6 rounded-full border-2 transition-all cursor-pointer ${
+                          (cardColors[selectedPreview.id] || selectedPreview.color) === c.hex
+                            ? 'scale-110 border-zinc-950 shadow-md ring-2 ring-cyan-500/30'
                             : 'border-white hover:scale-105'
                         }`}
-                        style={{ backgroundColor: c }}
+                        style={{ backgroundColor: c.hex }}
+                        title={c.name}
                       />
                     ))}
                   </div>
                 </div>
+              </div>
 
-                <div className="space-y-2 border-y border-zinc-100 py-4 text-xs font-medium text-zinc-700">
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-600" />
-                    <span>Conforme à 100% aux robots de recrutement (ATS)</span>
+              {/* Right Column (7/12 span): CVDesignr Recruiter & ATS Assessment Fiche */}
+              <div className="md:col-span-7 space-y-5">
+                <div>
+                  <span className="text-[10px] font-black text-cyan-700 uppercase tracking-wider bg-cyan-50 px-2.5 py-1 rounded-md border border-cyan-100 shadow-2xs">
+                    {selectedPreview.tag}
+                  </span>
+                  <h2 className="text-2xl sm:text-3xl font-black text-zinc-950 mt-2 tracking-tight">
+                    {selectedPreview.name}
+                  </h2>
+                  <p className="text-xs text-zinc-500 mt-1">
+                    Modèle {selectedPreview.columns === 1 ? 'à 1 colonne' : 'à 2 colonnes'} • Conçu pour profils {selectedPreview.level === 'entry' ? 'juniors' : selectedPreview.level === 'mid' ? 'intermédiaires / confirmés' : 'dirigeants & cadres'}
+                  </p>
+                </div>
+
+                <p className="text-xs text-zinc-600 leading-relaxed font-medium">
+                  {selectedPreview.description}
+                </p>
+
+                {/* Scorecard block */}
+                <div className="grid grid-cols-2 gap-3.5 bg-zinc-50 p-4 rounded-xl border border-zinc-150">
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-black text-zinc-400 uppercase">Compatibilité ATS</span>
+                    <div className="flex items-center gap-1.5">
+                      <Percent className="w-4 h-4 text-cyan-600 shrink-0" />
+                      <span className="text-sm font-black text-zinc-900">{selectedPreview.atsScore}%</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-600" />
-                    <span>Export PDF Vectoriel HD sans perte de qualité</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-600" />
-                    <span>Support Multi-langues (FR, EN, ES, DE)</span>
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-black text-zinc-400 uppercase">Popularité</span>
+                    <div className="flex items-center gap-1.5">
+                      <TrendingUp className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="text-sm font-black text-zinc-900">Élite ({selectedPreview.downloads})</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="pt-2 flex flex-col sm:flex-row gap-3">
+                {/* Recruiter Insight Panel */}
+                <div className="space-y-3.5 pt-2">
+                  <h3 className="text-xs font-black text-zinc-900 uppercase tracking-widest flex items-center gap-1 border-b border-zinc-100 pb-1.5">
+                    <ShieldCheck className="w-4 h-4 text-cyan-600" />
+                    Analyse des Recruteurs & Recommandations
+                  </h3>
+                  
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <span className="font-extrabold text-zinc-800 block">🎯 Secteurs cibles conseillés :</span>
+                      <span className="text-zinc-600 leading-normal font-medium">{selectedPreview.expertTips.sectors}</span>
+                    </div>
+
+                    <div>
+                      <span className="font-extrabold text-zinc-800 block">📷 Recommandation Photo :</span>
+                      <span className="text-zinc-600 leading-normal font-medium">{selectedPreview.expertTips.photoAdvice}</span>
+                    </div>
+
+                    <div>
+                      <span className="font-extrabold text-zinc-800 block">🤖 Robot d'acquisition (ATS) :</span>
+                      <span className="text-zinc-600 leading-normal font-medium">{selectedPreview.expertTips.atsInsight}</span>
+                    </div>
+
+                    <div>
+                      <span className="font-extrabold text-zinc-800 block">💡 Conseil exclusif de rédaction :</span>
+                      <span className="text-zinc-600 leading-normal font-medium italic">{selectedPreview.expertTips.proAdvice}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Row */}
+                <div className="pt-4 flex flex-col sm:flex-row items-center gap-3">
                   <button
                     onClick={() => handleUseTemplate(selectedPreview.id)}
-                    className="btn-premium btn-primary text-sm font-bold px-8 py-4 flex-1 flex items-center justify-center gap-2 shadow-lg"
+                    className="w-full sm:flex-1 py-3 px-6 bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-lg transition-colors"
                   >
                     <Sparkles className="w-4 h-4" />
-                    {t.templates.useTemplate}
+                    Utiliser ce modèle maintenant
                   </button>
                   <button
                     onClick={() => setSelectedPreview(null)}
-                    className="px-6 py-4 rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100 font-semibold text-sm transition-colors"
+                    className="w-full sm:w-auto py-3 px-5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold text-xs rounded-xl cursor-pointer transition-colors"
                   >
-                    {t.templates.close}
+                    Retour au catalogue
                   </button>
                 </div>
               </div>
