@@ -11,7 +11,7 @@ interface SidebarProps {
 
 export const Sidebar = ({ activeTab = 'sections', setActiveTab }: SidebarProps) => {
   const { t, language, setLanguage } = useLanguage();
-  const { data, updateTheme, loadLanguagePreset, exports, deleteExport } = useCVData();
+  const { data, setData, updateTheme, loadLanguagePreset, exports, deleteExport } = useCVData();
 
   const sections = [
     { id: 'header', name: t.editor.headerSection, icon: FileText },
@@ -129,30 +129,134 @@ export const Sidebar = ({ activeTab = 'sections', setActiveTab }: SidebarProps) 
         </div>
 
         {/* Tab 1: Sections */}
-        {activeTab === 'sections' && (
-          <div className="space-y-4 animate-fadeIn">
-            <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">
-              {t.editor.structureTitle}
-            </h2>
-            <div className="space-y-1.5">
-              {sections.map((section) => (
-                <div
-                  key={section.id}
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold bg-zinc-900/60 border border-zinc-800/80 text-zinc-300"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <section.icon className="w-4 h-4 text-blue-500" />
-                    <span>{section.name}</span>
+        {activeTab === 'sections' && (() => {
+          const headerSection = data.sections.find(s => s.type === 'header');
+          const photo = headerSection?.content?.photo;
+          const showPhoto = headerSection?.content?.showPhoto !== false;
+
+          const handlePhotoUpload = (base64: string) => {
+            if (headerSection) {
+              setData(prev => ({
+                ...prev,
+                sections: prev.sections.map(s => 
+                  s.type === 'header' 
+                    ? { ...s, content: { ...s.content, photo: base64, showPhoto: true } }
+                    : s
+                )
+              }));
+            }
+          };
+
+          const handleToggleShowPhoto = (checked: boolean) => {
+            if (headerSection) {
+              setData(prev => ({
+                ...prev,
+                sections: prev.sections.map(s => 
+                  s.type === 'header' 
+                    ? { ...s, content: { ...s.content, showPhoto: checked } }
+                    : s
+                )
+              }));
+            }
+          };
+
+          const handleRemovePhoto = () => {
+            if (headerSection) {
+              setData(prev => ({
+                ...prev,
+                sections: prev.sections.map(s => 
+                  s.type === 'header' 
+                    ? { ...s, content: { ...s.content, photo: '' } }
+                    : s
+                )
+              }));
+            }
+          };
+
+          return (
+            <div className="space-y-4 animate-fadeIn">
+              {/* Photo de Profil Widget */}
+              <div className="p-3 bg-zinc-900/90 rounded-xl border border-zinc-800 space-y-3 shadow-md">
+                <div className="flex items-center gap-3">
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden bg-zinc-800 border-2 border-zinc-700 shrink-0">
+                    {photo ? (
+                      <img referrerPolicy="no-referrer" src={photo} alt="Profil" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-zinc-500 text-[10px] font-bold">Photo</div>
+                    )}
                   </div>
-                  <span className="text-[10px] text-zinc-500 font-normal">{t.sidebar.onCanvas}</span>
+                  <div className="flex-1 text-left min-w-0">
+                    <h4 className="text-xs font-bold text-white leading-tight">Photo de Profil</h4>
+                    <p className="text-[10px] text-zinc-500 truncate">Format JPEG, PNG ou SVG</p>
+                  </div>
                 </div>
-              ))}
+
+                <div className="flex items-center justify-between gap-2">
+                  <label className="flex-1 py-1.5 px-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-[10px] text-center cursor-pointer transition-colors shadow-sm">
+                    Choisir un fichier
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            if (ev.target?.result) {
+                              handlePhotoUpload(ev.target.result as string);
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                  {photo && (
+                    <button
+                      type="button"
+                      onClick={handleRemovePhoto}
+                      className="py-1.5 px-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold rounded-lg text-[10px] transition-colors border border-zinc-700"
+                    >
+                      Supprimer
+                    </button>
+                  )}
+                </div>
+
+                <label className="flex items-center gap-2 text-[10px] text-zinc-400 font-semibold cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={showPhoto}
+                    onChange={(e) => handleToggleShowPhoto(e.target.checked)}
+                    className="rounded border-zinc-700 bg-zinc-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-black"
+                  />
+                  <span>Afficher la photo sur le CV</span>
+                </label>
+              </div>
+
+              <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">
+                {t.editor.structureTitle}
+              </h2>
+              <div className="space-y-1.5">
+                {sections.map((section) => (
+                  <div
+                    key={section.id}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold bg-zinc-900/60 border border-zinc-800/80 text-zinc-300"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <section.icon className="w-4 h-4 text-blue-500" />
+                      <span>{section.name}</span>
+                    </div>
+                    <span className="text-[10px] text-zinc-500 font-normal">{t.sidebar.onCanvas}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] text-zinc-500 italic px-1">
+                {t.sidebar.sectionsTip}
+              </p>
             </div>
-            <p className="text-[11px] text-zinc-500 italic px-1">
-              {t.sidebar.sectionsTip}
-            </p>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Tab 2: Templates */}
         {activeTab === 'templates' && (

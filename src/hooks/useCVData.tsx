@@ -36,7 +36,9 @@ export const sampleCVsByLanguage: Record<string, CVData> = {
           phone: '+33 6 12 34 56 78',
           location: 'Paris, France',
           website: 'alexdupont.dev',
-          summary: 'Développeur passionné avec 6+ ans d\'expérience dans la conception d\'applications web à fort trafic. Spécialisé en React, Node.js, TypeScript et architectures Cloud.'
+          summary: 'Développeur passionné avec 6+ ans d\'expérience dans la conception d\'applications web à fort trafic. Spécialisé en React, Node.js, TypeScript et architectures Cloud.',
+          photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+          showPhoto: true
         },
         style: {}
       },
@@ -104,7 +106,9 @@ export const sampleCVsByLanguage: Record<string, CVData> = {
           phone: '+1 (555) 019-2834',
           location: 'San Francisco, CA',
           website: 'alexmiller.dev',
-          summary: 'Passionate Senior Engineer with 6+ years of expertise in building high-throughput web applications. Expert in React, Node.js, TypeScript, and modern Cloud Infrastructure.'
+          summary: 'Passionate Senior Engineer with 6+ years of expertise in building high-throughput web applications. Expert in React, Node.js, TypeScript, and modern Cloud Infrastructure.',
+          photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+          showPhoto: true
         },
         style: {}
       },
@@ -172,7 +176,9 @@ export const sampleCVsByLanguage: Record<string, CVData> = {
           phone: '+34 612 345 678',
           location: 'Madrid, España',
           website: 'alegomez.dev',
-          summary: 'Desarrollador apasionado con más de 6 años de experiencia en aplicaciones web de alto tráfico. Especializado en React, Node.js, TypeScript y arquitecturas Cloud.'
+          summary: 'Desarrollador apasionado con más de 6 años de experiencia en aplicaciones web de alto tráfico. Especializado en React, Node.js, TypeScript y arquitecturas Cloud.',
+          photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+          showPhoto: true
         },
         style: {}
       },
@@ -240,7 +246,9 @@ export const sampleCVsByLanguage: Record<string, CVData> = {
           phone: '+49 30 12345678',
           location: 'Berlin, Deutschland',
           website: 'alexschneider.dev',
-          summary: 'Leidenschaftlicher Entwickler mit 6+ Jahren Erfahrung in der Erstellung skalierbarer Webanwendungen. Spezialisiert auf React, Node.js, TypeScript und Cloud-Architekturen.'
+          summary: 'Leidenschaftlicher Entwickler mit 6+ Jahren Erfahrung in der Erstellung skalierbarer Webanwendungen. Spezialisiert auf React, Node.js, TypeScript und Cloud-Architekturen.',
+          photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+          showPhoto: true
         },
         style: {}
       },

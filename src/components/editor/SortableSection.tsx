@@ -81,6 +81,63 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
 
           {section.type === 'header' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Photo Upload Area */}
+              <div className="sm:col-span-2 p-3 bg-zinc-100 rounded-xl border border-zinc-200/80 space-y-2 mb-1">
+                <label className="block text-[10px] font-extrabold text-zinc-500 uppercase tracking-wider">Photo de Profil</label>
+                <div className="flex items-center gap-4">
+                  <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-zinc-200 border-2 border-white shadow-md shrink-0">
+                    {content.photo ? (
+                      <img src={content.photo} alt="Aperçu" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-zinc-400 text-[10px] font-semibold">Aucune</div>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2 text-left">
+                    <div className="flex flex-wrap gap-2">
+                      <label className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[11px] font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-sm">
+                        <span>Sélectionner une image</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (ev) => {
+                                handleChange('photo', ev.target?.result as string);
+                                handleChange('showPhoto', true);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+                      {content.photo && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleChange('photo', '');
+                          }}
+                          className="px-3 py-1.5 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
+                        >
+                          Supprimer
+                        </button>
+                      )}
+                    </div>
+                    <label className="flex items-center gap-2 text-[11px] text-zinc-600 font-semibold cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={content.showPhoto !== false}
+                        onChange={(e) => handleChange('showPhoto', e.target.checked)}
+                        className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span>Afficher la photo sur le CV</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Nom complet</label>
                 <input
@@ -272,6 +329,13 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
         if (templateId === 'classique' || templateId === 'legal' || templateId === 'academic') {
           return (
             <div className={`text-center space-y-3 ${fontFamilyClass}`}>
+              {content.showPhoto !== false && content.photo && (
+                <div className="flex justify-center mb-1">
+                  <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-zinc-200 shadow-sm shrink-0">
+                    <img referrerPolicy="no-referrer" src={content.photo} alt="Profil" className="w-full h-full object-cover" />
+                  </div>
+                </div>
+              )}
               <div className="border-b-2 border-zinc-900 pb-4">
                 <h1 className="text-3xl font-extrabold text-[#0a0a0a] tracking-tight uppercase">{content.fullName || 'Votre Nom'}</h1>
                 <p className="text-sm font-bold uppercase tracking-widest mt-1" style={{ color: primaryColor }}>{content.title || 'Intitulé de poste'}</p>
@@ -294,15 +358,22 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
         if (templateId === 'creatif' || templateId === 'vibrant' || templateId === 'startup') {
           return (
             <div className={`space-y-4 ${fontFamilyClass}`}>
-              <div className="p-6 rounded-2xl text-white shadow-md" style={{ backgroundColor: primaryColor }}>
-                <h1 className="text-3xl font-black tracking-tight">{content.fullName || 'Votre Nom'}</h1>
-                <p className="text-sm font-semibold opacity-90 mt-1">{content.title || 'Intitulé de poste'}</p>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs opacity-90 mt-4 font-medium">
-                  {content.email && <span>📧 {content.email}</span>}
-                  {content.phone && <span>📞 {content.phone}</span>}
-                  {content.location && <span>📍 {content.location}</span>}
-                  {content.website && <span>🌐 {content.website}</span>}
+              <div className="p-6 rounded-2xl text-white shadow-md flex flex-col md:flex-row gap-5 items-center justify-between" style={{ backgroundColor: primaryColor }}>
+                <div className="space-y-2 flex-1 text-center md:text-left">
+                  <h1 className="text-3xl font-black tracking-tight">{content.fullName || 'Votre Nom'}</h1>
+                  <p className="text-sm font-semibold opacity-90 mt-1">{content.title || 'Intitulé de poste'}</p>
+                  <div className="flex flex-wrap justify-center md:justify-start gap-x-4 gap-y-1 text-xs opacity-90 mt-4 font-medium">
+                    {content.email && <span>📧 {content.email}</span>}
+                    {content.phone && <span>📞 {content.phone}</span>}
+                    {content.location && <span>📍 {content.location}</span>}
+                    {content.website && <span>🌐 {content.website}</span>}
+                  </div>
                 </div>
+                {content.showPhoto !== false && content.photo && (
+                  <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-white/40 shadow-lg shrink-0">
+                    <img referrerPolicy="no-referrer" src={content.photo} alt="Profil" className="w-full h-full object-cover" />
+                  </div>
+                )}
               </div>
               {content.summary && (
                 <p className="text-xs text-zinc-600 leading-relaxed italic border-l-2 pl-3" style={{ borderColor: primaryColor }}>
@@ -317,11 +388,16 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
           return (
             <div className={`space-y-3 ${fontFamilyClass}`}>
               <div className="bg-zinc-900 text-white p-6 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-l-4" style={{ borderColor: primaryColor }}>
-                <div>
+                <div className="space-y-1 flex-1 text-left">
                   <h1 className="text-3xl font-extrabold tracking-tight text-white">{content.fullName || 'Votre Nom'}</h1>
                   <p className="text-sm font-bold uppercase tracking-wider mt-1" style={{ color: primaryColor }}>{content.title || 'Intitulé de poste'}</p>
                 </div>
-                <div className="text-right text-xs text-zinc-300 space-y-1">
+                {content.showPhoto !== false && content.photo && (
+                  <div className="w-20 h-20 rounded-xl overflow-hidden border-2 border-zinc-800 shadow-sm shrink-0">
+                    <img referrerPolicy="no-referrer" src={content.photo} alt="Profil" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className="text-right text-xs text-zinc-300 space-y-1 shrink-0">
                   {content.email && <div>{content.email}</div>}
                   {content.phone && <div>{content.phone}</div>}
                   {content.location && <div>{content.location}</div>}
@@ -339,6 +415,13 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
         if (templateId === 'luxure' || templateId === 'elegant_serif') {
           return (
             <div className={`text-center space-y-3 font-serif`}>
+              {content.showPhoto !== false && content.photo && (
+                <div className="flex justify-center mb-1">
+                  <div className="w-20 h-20 rounded-full overflow-hidden border border-amber-900/10 shadow-sm shrink-0">
+                    <img referrerPolicy="no-referrer" src={content.photo} alt="Profil" className="w-full h-full object-cover" />
+                  </div>
+                </div>
+              )}
               <div className="border-b border-amber-900/20 pb-4">
                 <h1 className="text-3xl font-normal tracking-widest text-[#0a0a0a] uppercase">{content.fullName || 'Votre Nom'}</h1>
                 <p className="text-xs font-semibold uppercase tracking-widest mt-2 text-amber-800" style={{ color: primaryColor }}>{content.title || 'Intitulé de poste'}</p>
@@ -360,9 +443,16 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
         // Moderne / Minimal / Tech Lead / Nordic Default
         return (
           <div className={`space-y-3 ${fontFamilyClass}`}>
-            <div className="border-b border-zinc-200 pb-4">
-              <h1 className="text-3xl font-extrabold text-[#0a0a0a] tracking-tight">{content.fullName || 'Votre Nom'}</h1>
-              <p className="text-sm font-semibold mt-1" style={{ color: primaryColor }}>{content.title || 'Intitulé de poste'}</p>
+            <div className="border-b border-zinc-200 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-left">
+              <div className="space-y-1">
+                <h1 className="text-3xl font-extrabold text-[#0a0a0a] tracking-tight">{content.fullName || 'Votre Nom'}</h1>
+                <p className="text-sm font-semibold mt-1" style={{ color: primaryColor }}>{content.title || 'Intitulé de poste'}</p>
+              </div>
+              {content.showPhoto !== false && content.photo && (
+                <div className="w-24 h-24 rounded-xl overflow-hidden border-2 border-white shadow-md shrink-0">
+                  <img referrerPolicy="no-referrer" src={content.photo} alt="Profil" className="w-full h-full object-cover" />
+                </div>
+              )}
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500 font-medium">
               {content.email && <span>📧 {content.email}</span>}
@@ -371,7 +461,7 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
               {content.website && <span>🌐 {content.website}</span>}
             </div>
             {content.summary && (
-              <p className="text-xs text-zinc-600 leading-relaxed pt-2 italic">
+              <p className="text-xs text-zinc-600 leading-relaxed pt-2 italic text-left">
                 "{content.summary}"
               </p>
             )}
