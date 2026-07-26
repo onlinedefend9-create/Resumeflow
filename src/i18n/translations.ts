@@ -62,6 +62,7 @@ export interface TranslationSchema {
     exportPdf: string;
     generating: string;
     share: string;
+    print: string;
     linkCopied: string;
     headerSection: string;
     experienceSection: string;
@@ -235,6 +236,7 @@ export const translations: Record<Language, TranslationSchema> = {
       exportPdf: 'Exporter PDF',
       generating: 'Génération...',
       share: 'Partager',
+      print: 'Imprimer',
       linkCopied: 'Lien copié',
       headerSection: 'En-tête & Contact',
       experienceSection: 'Expérience Pro',
@@ -461,6 +463,7 @@ export const translations: Record<Language, TranslationSchema> = {
       exportPdf: 'Export PDF',
       generating: 'Generating...',
       share: 'Share',
+      print: 'Print',
       linkCopied: 'Link Copied',
       headerSection: 'Header & Contact',
       experienceSection: 'Work Experience',
@@ -687,6 +690,7 @@ export const translations: Record<Language, TranslationSchema> = {
       exportPdf: 'Exportar PDF',
       generating: 'Generando...',
       share: 'Compartir',
+      print: 'Imprimir',
       linkCopied: 'Enlace copiado',
       headerSection: 'Encabezado y Contacto',
       experienceSection: 'Experiencia Laboral',
@@ -913,6 +917,7 @@ export const translations: Record<Language, TranslationSchema> = {
       exportPdf: 'PDF Exportieren',
       generating: 'Generiere...',
       share: 'Teilen',
+      print: 'Drucken',
       linkCopied: 'Link kopiert',
       headerSection: 'Kopfzeile & Kontakt',
       experienceSection: 'Berufserfahrung',

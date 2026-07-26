@@ -124,11 +124,11 @@ export const Toolbar = ({}: ToolbarProps) => {
 
         <button
           onClick={handlePrint}
-          className="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-zinc-200 bg-white text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 transition-all"
-          title="Imprimer / Enregistrer en PDF (navigateur)"
+          className="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-zinc-200 bg-white text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 transition-all cursor-pointer"
+          title={t.editor.print}
         >
           <Printer className="w-3.5 h-3.5 text-zinc-600" />
-          <span>Imprimer</span>
+          <span>{t.editor.print}</span>
         </button>
 
         <div className="w-px h-5 bg-zinc-200 hidden sm:block mx-0.5" />

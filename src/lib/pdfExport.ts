@@ -1,5 +1,5 @@
 // @ts-ignore
-import html2pdfModule from 'html2pdf.js';
+import html2pdfModule from 'html2pdf.js/dist/html2pdf.bundle.min.js';
 
 const getHtml2Pdf = () => {
   if (typeof html2pdfModule === 'function') {
