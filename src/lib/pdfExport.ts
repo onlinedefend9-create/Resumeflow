@@ -45,6 +45,42 @@ const getHtml2Pdf = async () => {
   return null;
 };
 
+const imageToBase64 = (url: string): Promise<string> => {
+  return new Promise((resolve) => {
+    // If it's already a Data URI, return it immediately
+    if (url.startsWith('data:')) {
+      resolve(url);
+      return;
+    }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          const dataURL = canvas.toDataURL('image/png');
+          resolve(dataURL);
+        } else {
+          resolve(url);
+        }
+      } catch (err) {
+        console.warn('Canvas conversion failed for image:', url, err);
+        resolve(url);
+      }
+    };
+    img.onerror = () => {
+      // Return a transparent 1x1 GIF so it fails gracefully and doesn't crash
+      resolve('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
+    };
+    // Add cache buster to bypass cached image without CORS headers
+    img.src = url + (url.indexOf('?') > -1 ? '&' : '?') + 't_pdf=' + new Date().getTime();
+  });
+};
+
 export const exportToPDF = async (elementId: string = 'cv-canvas', filename: string = 'resume.pdf'): Promise<string | null> => {
   const element = document.getElementById(elementId);
   if (!element) {
@@ -56,9 +92,37 @@ export const exportToPDF = async (elementId: string = 'cv-canvas', filename: str
   // Add temporary print class to document body to hide non-printable widgets/buttons
   document.body.classList.add('exporting-pdf');
 
+  // We create a deep clone of the element, position it offscreen, convert all its images
+  // to base64, and then render it. This is extremely robust against CORS issues and layout shifts.
+  const clone = element.cloneNode(true) as HTMLElement;
+  clone.id = `${elementId}-pdf-clone`;
+  
+  // Render cloned element offscreen but still within the DOM so styles apply correctly
+  clone.style.position = 'absolute';
+  clone.style.left = '-9999px';
+  clone.style.top = '-9999px';
+  clone.style.width = `${element.offsetWidth}px`;
+  
+  document.body.appendChild(clone);
+
   try {
     const html2pdf = await getHtml2Pdf();
     if (html2pdf) {
+      // Find all image elements in the clone and pre-convert them to Base64
+      const images = clone.getElementsByTagName('img');
+      for (let i = 0; i < images.length; i++) {
+        const img = images[i];
+        const src = img.src;
+        if (src) {
+          const base64 = await imageToBase64(src);
+          img.src = base64;
+          // Ensure it has CORS settings if needed or none if it's already a Data URI
+          if (base64.startsWith('data:')) {
+            img.removeAttribute('crossorigin');
+          }
+        }
+      }
+
       const opt = {
         margin: [8, 8, 8, 8],
         filename: filename,
@@ -66,6 +130,7 @@ export const exportToPDF = async (elementId: string = 'cv-canvas', filename: str
         html2canvas: {
           scale: 2,
           useCORS: true,
+          allowTaint: true,
           logging: false,
           scrollY: 0,
           scrollX: 0
@@ -74,21 +139,16 @@ export const exportToPDF = async (elementId: string = 'cv-canvas', filename: str
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
 
-      // Generate Data URI of the PDF
-      const pdfDataUri = await html2pdf().set(opt).from(element).output('datauristring');
+      // Generate Data URI from the fully-prepared clone
+      const pdfDataUri = await html2pdf().set(opt).from(clone).output('datauristring');
 
-      // Attempt to save file directly to disk
-      try {
-        await html2pdf().set(opt).from(element).save();
-      } catch (saveError) {
-        console.warn('Standard save failed, fallback to anchor tag download', saveError);
-        const link = document.createElement('a');
-        link.href = pdfDataUri;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
+      // Trigger standard and highly reliable file download via anchor click
+      const link = document.createElement('a');
+      link.href = pdfDataUri;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
       return pdfDataUri;
     } else {
@@ -101,6 +161,10 @@ export const exportToPDF = async (elementId: string = 'cv-canvas', filename: str
     window.print();
     return null;
   } finally {
+    // Clean up clone from the DOM
+    if (clone.parentNode) {
+      clone.parentNode.removeChild(clone);
+    }
     document.body.classList.remove('exporting-pdf');
   }
 };
