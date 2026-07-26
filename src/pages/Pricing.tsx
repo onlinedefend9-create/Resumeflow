@@ -2,18 +2,10 @@ import { Link } from 'react-router-dom';
 import { SEO } from '../components/SEO';
 import { AdSlot } from '../components/AdSlot';
 import { Check, Sparkles } from 'lucide-react';
-import { useState } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 
 export const Pricing = () => {
-  const [isPremium, setIsPremium] = useState(() => localStorage.getItem('isPremium') === 'true');
   const { t } = useLanguage();
-
-  const handleUpgradeMock = () => {
-    localStorage.setItem('isPremium', 'true');
-    setIsPremium(true);
-    alert(t.pricing.alertSuccess);
-  };
 
   return (
     <div className="py-16 md:py-24 px-6 md:px-10 max-w-7xl mx-auto space-y-16">
@@ -32,23 +24,34 @@ export const Pricing = () => {
         </p>
       </div>
 
-      {/* Pricing Cards Comparison */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-        {/* Free Plan */}
-        <div className="p-8 rounded-2xl border border-zinc-200 bg-white shadow-sm space-y-6 flex flex-col justify-between">
+      {/* Free Plan Card - Single 100% Free Plan */}
+      <div className="max-w-xl mx-auto">
+        <div className="p-8 sm:p-10 rounded-3xl border border-emerald-200 bg-emerald-50/40 shadow-sm space-y-6 flex flex-col justify-between text-center relative">
           <div className="space-y-4">
-            <div className="inline-block px-3 py-1 bg-zinc-100 text-zinc-700 text-xs font-bold rounded-full uppercase tracking-wider">
-              {t.pricing.freeTitle}
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-emerald-600 text-white text-xs font-black rounded-full uppercase tracking-wider mx-auto">
+              <Sparkles className="w-3.5 h-3.5" />
+              100% GRATUIT & SANS ENGAGEMENT
             </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-4xl font-extrabold text-[#0a0a0a]">{t.pricing.freePrice}</span>
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-5xl font-black text-[#0a0a0a]">0€</span>
+              <span className="text-zinc-500 text-sm font-semibold">/ à vie</span>
             </div>
 
-            <div className="pt-4 border-t border-zinc-100 space-y-3 text-xs text-zinc-700 font-medium">
+            <p className="text-zinc-600 text-sm max-w-md mx-auto">
+              Toutes les fonctionnalités avancées, modèles professionnels, téléchargements PDF illimités et optimisation ATS sont inclus gratuitement pour tous.
+            </p>
+
+            <div className="pt-6 border-t border-emerald-200/60 grid grid-cols-1 sm:grid-cols-2 gap-3 text-left text-xs text-zinc-800 font-medium max-w-md mx-auto">
               {t.pricing.freePerks.map((perk, idx) => (
                 <div key={idx} className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-600" />
+                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>{perk}</span>
+                </div>
+              ))}
+              {t.pricing.premiumPerks.map((perk, idx) => (
+                <div key={`prem-${idx}`} className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span className="font-semibold text-zinc-900">{perk}</span>
                 </div>
               ))}
             </div>
@@ -56,39 +59,10 @@ export const Pricing = () => {
 
           <Link
             to="/cv-generator"
-            className="w-full py-3 rounded-xl border border-zinc-200 text-center text-xs font-bold text-zinc-900 hover:bg-zinc-50 transition-colors"
+            className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-extrabold shadow-sm transition-all text-center block"
           >
             {t.pricing.freeCta}
           </Link>
-        </div>
-
-        {/* Premium Plan */}
-        <div className="p-8 rounded-2xl border-2 border-blue-600 bg-white shadow-xl space-y-6 flex flex-col justify-between relative overflow-hidden">
-          <div className="space-y-4">
-            <div className="inline-block px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full uppercase tracking-wider">
-              {t.pricing.premiumTitle}
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-4xl font-extrabold text-[#0a0a0a]">{t.pricing.premiumPrice}</span>
-            </div>
-
-            <div className="pt-4 border-t border-zinc-100 space-y-3 text-xs text-zinc-700 font-medium">
-              {t.pricing.premiumPerks.map((perk, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" />
-                  <span className="font-semibold text-[#0a0a0a]">{perk}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <button
-            onClick={handleUpgradeMock}
-            className="btn-premium btn-primary w-full py-3 text-xs font-bold flex items-center justify-center gap-2"
-          >
-            <Sparkles className="w-4 h-4" />
-            {isPremium ? t.pricing.premiumActive : t.pricing.premiumCta}
-          </button>
         </div>
       </div>
 
