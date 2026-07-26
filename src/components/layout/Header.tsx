@@ -43,7 +43,7 @@ export const Header = () => {
             {t.nav.pricing}
           </Link>
           <Link to="/sitemap" className="text-sm font-medium text-zinc-600 hover:text-[#0a0a0a] transition-colors">
-            Plan du site
+            {t.nav.sitemap}
           </Link>
         </nav>
 
@@ -100,7 +100,7 @@ export const Header = () => {
               className="flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-100 text-zinc-800 font-semibold text-sm transition-colors"
             >
               <MapPin className="w-4 h-4 text-violet-600" />
-              <span>Plan du site (Sitemap)</span>
+              <span>{t.nav.sitemap}</span>
             </Link>
           </div>
 

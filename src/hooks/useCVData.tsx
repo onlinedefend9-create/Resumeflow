@@ -383,9 +383,15 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [searchParams]);
 
-  // Persist to localStorage
+  // Persist to localStorage (debounced to avoid blocking UI updates on rapid typing)
   useEffect(() => {
-    localStorage.setItem('cv-data-v3', JSON.stringify(data));
+    const handler = setTimeout(() => {
+      localStorage.setItem('cv-data-v3', JSON.stringify(data));
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
   }, [data]);
 
   // Automatically sync CV content data when application language changes
