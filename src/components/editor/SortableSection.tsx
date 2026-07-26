@@ -331,7 +331,7 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
               {content.showPhoto !== false && content.photo && (
                 <div className="flex justify-center mb-1">
                   <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-zinc-200 shadow-sm shrink-0">
-                    <img referrerPolicy="no-referrer" crossOrigin="anonymous" src={content.photo} alt="Profil" className="w-full h-full object-cover" />
+                    <img referrerPolicy="no-referrer" crossOrigin={content.photo && content.photo.startsWith('data:') ? undefined : 'anonymous'} src={content.photo} alt="Profil" className="w-full h-full object-cover" />
                   </div>
                 </div>
               )}
@@ -370,7 +370,7 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
                 </div>
                 {content.showPhoto !== false && content.photo && (
                   <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-white/40 shadow-lg shrink-0">
-                    <img referrerPolicy="no-referrer" crossOrigin="anonymous" src={content.photo} alt="Profil" className="w-full h-full object-cover" />
+                    <img referrerPolicy="no-referrer" crossOrigin={content.photo && content.photo.startsWith('data:') ? undefined : 'anonymous'} src={content.photo} alt="Profil" className="w-full h-full object-cover" />
                   </div>
                 )}
               </div>
@@ -393,7 +393,7 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
                 </div>
                 {content.showPhoto !== false && content.photo && (
                   <div className="w-20 h-20 rounded-xl overflow-hidden border-2 border-zinc-800 shadow-sm shrink-0">
-                    <img referrerPolicy="no-referrer" crossOrigin="anonymous" src={content.photo} alt="Profil" className="w-full h-full object-cover" />
+                    <img referrerPolicy="no-referrer" crossOrigin={content.photo && content.photo.startsWith('data:') ? undefined : 'anonymous'} src={content.photo} alt="Profil" className="w-full h-full object-cover" />
                   </div>
                 )}
                 <div className="text-right text-xs text-zinc-300 space-y-1 shrink-0">
@@ -417,7 +417,7 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
               {content.showPhoto !== false && content.photo && (
                 <div className="flex justify-center mb-1">
                   <div className="w-20 h-20 rounded-full overflow-hidden border border-amber-900/10 shadow-sm shrink-0">
-                    <img referrerPolicy="no-referrer" crossOrigin="anonymous" src={content.photo} alt="Profil" className="w-full h-full object-cover" />
+                    <img referrerPolicy="no-referrer" crossOrigin={content.photo && content.photo.startsWith('data:') ? undefined : 'anonymous'} src={content.photo} alt="Profil" className="w-full h-full object-cover" />
                   </div>
                 </div>
               )}
@@ -449,7 +449,7 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
               </div>
               {content.showPhoto !== false && content.photo && (
                 <div className="w-24 h-24 rounded-xl overflow-hidden border-2 border-white shadow-md shrink-0">
-                  <img referrerPolicy="no-referrer" crossOrigin="anonymous" src={content.photo} alt="Profil" className="w-full h-full object-cover" />
+                  <img referrerPolicy="no-referrer" crossOrigin={content.photo && content.photo.startsWith('data:') ? undefined : 'anonymous'} src={content.photo} alt="Profil" className="w-full h-full object-cover" />
                 </div>
               )}
             </div>

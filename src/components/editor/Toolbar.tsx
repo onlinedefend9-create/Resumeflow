@@ -187,19 +187,16 @@ export const Toolbar = ({}: ToolbarProps) => {
                 <span>{mt.download}</span>
               </a>
 
-              <button
-                onClick={() => {
-                  const newTab = window.open();
-                  if (newTab) {
-                    newTab.document.write(`<iframe src="${lastPdf.dataUri}" style="width:100%; height:100%; border:none;"></iframe>`);
-                  }
-                  setShowModal(false);
-                }}
+              <a
+                href={lastPdf.dataUri}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="py-3 px-4 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-bold text-center flex items-center justify-center gap-2 transition-all cursor-pointer"
+                onClick={() => setShowModal(false)}
               >
                 <Eye className="w-4 h-4" />
                 <span>{mt.open}</span>
-              </button>
+              </a>
             </div>
 
             <button
