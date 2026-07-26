@@ -66,9 +66,8 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
   };
 
   const renderSectionContent = () => {
-    if (isEditingInline) {
-      return (
-        <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-4 text-xs font-sans">
+    const editForm = (
+      <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-4 text-xs font-sans">
           <div className="flex justify-between items-center border-b border-zinc-200 pb-2">
             <span className="font-bold text-zinc-800 uppercase tracking-wider">Édition rapide: {section.type}</span>
             <button
@@ -321,10 +320,10 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
             </div>
           )}
         </div>
-      );
-    }
+    );
 
-    switch (section.type) {
+    const previewContent = (() => {
+      switch (section.type) {
       case 'header':
         if (templateId === 'classique' || templateId === 'legal' || templateId === 'academic') {
           return (
@@ -554,6 +553,18 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
           </div>
         );
     }
+    })();
+
+    return (
+      <>
+        <div className={`section-edit-form ${isEditingInline ? 'block' : 'hidden'} no-print`}>
+          {editForm}
+        </div>
+        <div className={`section-preview-content ${isEditingInline ? 'hidden' : 'block'}`}>
+          {previewContent}
+        </div>
+      </>
+    );
   };
 
   return (

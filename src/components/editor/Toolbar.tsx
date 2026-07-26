@@ -18,14 +18,17 @@ export const Toolbar = ({}: ToolbarProps) => {
   const [showModal, setShowModal] = useState(false);
   const [lastPdf, setLastPdf] = useState<{ name: string; dataUri: string } | null>(null);
   const { t, language } = useLanguage();
-  const { addExport } = useCVData();
-
-  const isFr = language === 'fr';
+  const { addExport, data } = useCVData();
 
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const name = 'Mon_CV.pdf';
+      const headerSection = data?.sections?.find((s) => s.type === 'header');
+      const fullName = headerSection?.content?.fullName;
+      const formattedName = fullName 
+        ? fullName.trim().replace(/\s+/g, '_') 
+        : (language === 'fr' ? 'Mon_CV' : language === 'es' ? 'Mi_CV' : language === 'de' ? 'Mein_Lebenslauf' : 'My_Resume');
+      const name = `${formattedName}.pdf`;
       const dataUri = await exportToPDF('cv-canvas', name);
       if (dataUri) {
         addExport(name, dataUri);
@@ -39,6 +42,54 @@ export const Toolbar = ({}: ToolbarProps) => {
       setIsExporting(false);
     }
   };
+
+  const getModalTranslations = () => {
+    switch (language) {
+      case 'fr':
+        return {
+          title: 'Votre PDF est prêt !',
+          subtitle: 'Généré et sauvegardé avec succès',
+          storageInfo: 'Sauvegardé dans votre Stockage Local (localStorage).',
+          helpText: "Si le téléchargement automatique n'a pas démarré, vous pouvez forcer le téléchargement ou ouvrir le PDF directement dans un nouvel onglet ci-dessous.",
+          download: 'Télécharger',
+          open: 'Ouvrir',
+          close: 'Fermer',
+        };
+      case 'es':
+        return {
+          title: '¡Tu PDF está listo!',
+          subtitle: 'Generado y guardado con éxito',
+          storageInfo: 'Guardado en tu almacenamiento local seguro (localStorage).',
+          helpText: 'Si la descarga automática no se inició, puedes descargar manualmente o abrir el PDF en una pestaña nueva abajo.',
+          download: 'Descargar',
+          open: 'Abrir',
+          close: 'Cerrar',
+        };
+      case 'de':
+        return {
+          title: 'Ihr PDF ist bereit!',
+          subtitle: 'Erfolgreich generiert und gespeichert',
+          storageInfo: 'In Ihrem sicheren lokalen Speicher (localStorage) gespeichert.',
+          helpText: 'Wenn der automatische Download nicht gestartet ist, können Sie den Download manuell auslösen oder das PDF unten in einem neuen Tab öffnen.',
+          download: 'Herunterladen',
+          open: 'Öffnen',
+          close: 'Schließen',
+        };
+      case 'en':
+      default:
+        return {
+          title: 'Your PDF is ready!',
+          subtitle: 'Successfully generated and saved',
+          storageInfo: 'Saved in your secure Local Storage (localStorage).',
+          helpText: 'If the automatic download did not start, you can manually trigger the download or open the PDF in a new tab below.',
+          download: 'Download',
+          open: 'Open',
+          close: 'Close',
+        };
+    }
+  };
+
+  const mt = getModalTranslations();
 
   const handlePrint = () => {
     window.print();
@@ -108,22 +159,20 @@ export const Toolbar = ({}: ToolbarProps) => {
               </div>
               <div>
                 <h3 className="text-base font-bold text-zinc-900">
-                  {isFr ? 'Votre PDF est prêt !' : 'Your PDF is ready!'}
+                  {mt.title}
                 </h3>
                 <p className="text-xs text-zinc-500 font-medium">
-                  {isFr ? 'Généré et sauvegardé avec succès' : 'Successfully generated and saved'}
+                  {mt.subtitle}
                 </p>
               </div>
             </div>
 
             <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-100 space-y-2 text-xs text-zinc-600">
               <p className="font-semibold text-zinc-800">
-                {isFr ? 'Sauvegardé dans votre Stockage Local (localStorage).' : 'Saved in your secure Local Storage (localStorage).'}
+                {mt.storageInfo}
               </p>
               <p>
-                {isFr
-                  ? "Si le téléchargement automatique n'a pas démarré, vous pouvez forcer le téléchargement ou ouvrir le PDF directement dans un nouvel onglet ci-dessous."
-                  : 'If the automatic download did not start, you can manually trigger the download or open the PDF in a new tab below.'}
+                {mt.helpText}
               </p>
             </div>
 
@@ -135,7 +184,7 @@ export const Toolbar = ({}: ToolbarProps) => {
                 onClick={() => setShowModal(false)}
               >
                 <Download className="w-4 h-4" />
-                <span>{isFr ? 'Télécharger' : 'Download'}</span>
+                <span>{mt.download}</span>
               </a>
 
               <button
@@ -149,7 +198,7 @@ export const Toolbar = ({}: ToolbarProps) => {
                 className="py-3 px-4 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-bold text-center flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <Eye className="w-4 h-4" />
-                <span>{isFr ? 'Ouvrir' : 'Open'}</span>
+                <span>{mt.open}</span>
               </button>
             </div>
 
@@ -157,7 +206,7 @@ export const Toolbar = ({}: ToolbarProps) => {
               onClick={() => setShowModal(false)}
               className="w-full py-2.5 text-xs font-semibold text-zinc-500 hover:text-zinc-700 text-center rounded-xl bg-zinc-50 hover:bg-zinc-100/80 transition-all cursor-pointer"
             >
-              {isFr ? 'Fermer' : 'Close'}
+              {mt.close}
             </button>
           </div>
         </div>

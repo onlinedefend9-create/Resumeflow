@@ -67,8 +67,31 @@
   display: none !important;
 }
 
+.exporting-pdf .section-edit-form {
+  display: none !important;
+}
+
+.exporting-pdf .section-preview-content {
+  display: block !important;
+}
+
 .exporting-pdf #cv-canvas {
   box-shadow: none !important;
   border: none !important;
+  width: 210mm !important;
+  height: auto !important;
+  min-height: 297mm !important;
+  padding: 20mm !important;
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
+  background-color: white !important;
+  transform: none !important;
+}
+
+.exporting-pdf #cv-canvas > div {
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin-bottom: 6mm !important;
 }
 
