@@ -89,36 +89,22 @@ export const exportToPDF = async (elementId: string = 'cv-canvas', filename: str
     return null;
   }
 
-  // Add temporary print class to document body to hide non-printable widgets/buttons
+  // Add temporary print class to document body to hide non-printable widgets/buttons and apply perfect styles
   document.body.classList.add('exporting-pdf');
 
-  // We create a deep clone of the element, position it offscreen, convert all its images
-  // to base64, and then render it. This is extremely robust against CORS issues and layout shifts.
-  const clone = element.cloneNode(true) as HTMLElement;
-  clone.id = `${elementId}-pdf-clone`;
-  
-  // Render cloned element offscreen but still within the DOM so styles apply correctly
-  clone.style.position = 'absolute';
-  clone.style.left = '-9999px';
-  clone.style.top = '-9999px';
-  clone.style.width = `${element.offsetWidth}px`;
-  
-  document.body.appendChild(clone);
+  // Give a short delay for layout recalculations to stabilize
+  await new Promise((resolve) => setTimeout(resolve, 250));
 
   try {
     const html2pdf = await getHtml2Pdf();
     if (html2pdf) {
-      // Find all image elements in the clone and pre-convert them to Base64
-      const images = clone.getElementsByTagName('img');
+      // Ensure all images are CORS-ready if they are not Data URIs
+      const images = element.getElementsByTagName('img');
       for (let i = 0; i < images.length; i++) {
         const img = images[i];
-        const src = img.src;
-        if (src) {
-          const base64 = await imageToBase64(src);
-          img.src = base64;
-          // Ensure it has CORS settings if needed or none if it's already a Data URI
-          if (base64.startsWith('data:')) {
-            img.removeAttribute('crossorigin');
+        if (img.src && !img.src.startsWith('data:')) {
+          if (!img.getAttribute('crossorigin')) {
+            img.setAttribute('crossorigin', 'anonymous');
           }
         }
       }
@@ -139,10 +125,10 @@ export const exportToPDF = async (elementId: string = 'cv-canvas', filename: str
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
 
-      // Generate Data URI from the fully-prepared clone
-      const pdfDataUri = await html2pdf().set(opt).from(clone).output('datauristring');
+      // Generate Data URI of the PDF directly from the visible element
+      const pdfDataUri = await html2pdf().set(opt).from(element).output('datauristring');
 
-      // Trigger standard and highly reliable file download via anchor click
+      // Trigger standard file download via anchor click
       const link = document.createElement('a');
       link.href = pdfDataUri;
       link.download = filename;
@@ -161,10 +147,7 @@ export const exportToPDF = async (elementId: string = 'cv-canvas', filename: str
     window.print();
     return null;
   } finally {
-    // Clean up clone from the DOM
-    if (clone.parentNode) {
-      clone.parentNode.removeChild(clone);
-    }
+    // Restore normal screen layout styles
     document.body.classList.remove('exporting-pdf');
   }
 };
