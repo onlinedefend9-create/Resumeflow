@@ -2,6 +2,9 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { CVData, CVTheme, TemplateId, PDFExportItem } from '../types/cv';
 import { useLanguage } from '../i18n/LanguageContext';
+import { useAuth } from './useAuth';
+import { db } from '../lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export interface CVContextType {
   data: CVData;
@@ -11,6 +14,8 @@ export interface CVContextType {
   exports: PDFExportItem[];
   addExport: (name: string, dataUri: string) => void;
   deleteExport: (id: string) => void;
+  isCloudSynced: boolean;
+  isSyncing: boolean;
 }
 
 const CVContext = createContext<CVContextType | undefined>(undefined);
@@ -308,6 +313,10 @@ export const sampleCVsByLanguage: Record<string, CVData> = {
 export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [searchParams] = useSearchParams();
   const { language, setLanguage } = useLanguage();
+  const { user } = useAuth();
+
+  const [isCloudSynced, setIsCloudSynced] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const [data, setData] = useState<CVData>(() => {
     // Read URL parameters
@@ -351,6 +360,73 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return baseData;
   });
 
+  const [exports, setExports] = useState<PDFExportItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('cv_exports_history');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error('Error loading exports history:', e);
+      return [];
+    }
+  });
+
+  // Handle loading user data from Firestore on login
+  useEffect(() => {
+    let active = true;
+    if (!user) {
+      setIsCloudSynced(false);
+      return;
+    }
+
+    const loadUserData = async () => {
+      try {
+        setIsSyncing(true);
+        const dataDocRef = doc(db, 'users', user.uid, 'cv', 'data');
+        const exportsDocRef = doc(db, 'users', user.uid, 'cv', 'exports');
+
+        const [dataSnap, exportsSnap] = await Promise.all([
+          getDoc(dataDocRef),
+          getDoc(exportsDocRef)
+        ]);
+
+        if (!active) return;
+
+        if (dataSnap.exists()) {
+          const cloudData = dataSnap.data() as CVData;
+          setData(cloudData);
+          localStorage.setItem('cv-data-v3', JSON.stringify(cloudData));
+        } else {
+          // If no cloud data, seed Firestore with current local data
+          await setDoc(dataDocRef, data);
+        }
+
+        if (exportsSnap.exists()) {
+          const cloudExportsObj = exportsSnap.data();
+          const cloudExports = cloudExportsObj.items || [];
+          setExports(cloudExports);
+          localStorage.setItem('cv_exports_history', JSON.stringify(cloudExports));
+        } else {
+          // If no cloud exports, seed Firestore with current local exports
+          await setDoc(exportsDocRef, { items: exports });
+        }
+
+        setIsCloudSynced(true);
+      } catch (err) {
+        console.error('Error syncing with Firestore:', err);
+      } finally {
+        if (active) {
+          setIsSyncing(false);
+        }
+      }
+    };
+
+    loadUserData();
+
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
   // Handle URL query parameter changes dynamically (e.g. user navigating from catalog)
   useEffect(() => {
     const urlTemplate = searchParams.get('template') as TemplateId | null;
@@ -383,16 +459,37 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [searchParams]);
 
-  // Persist to localStorage (debounced to avoid blocking UI updates on rapid typing)
+  // Persist to localStorage and Firestore (debounced to avoid blocking UI updates on rapid typing)
   useEffect(() => {
-    const handler = setTimeout(() => {
+    const handler = setTimeout(async () => {
       localStorage.setItem('cv-data-v3', JSON.stringify(data));
+
+      if (user) {
+        try {
+          const dataDocRef = doc(db, 'users', user.uid, 'cv', 'data');
+          await setDoc(dataDocRef, data);
+          setIsCloudSynced(true);
+        } catch (err) {
+          console.error('Failed to save CV data to Firestore:', err);
+          setIsCloudSynced(false);
+        }
+      }
     }, 500);
 
     return () => {
       clearTimeout(handler);
     };
-  }, [data]);
+  }, [data, user]);
+
+  // Sync exports history with Firestore when changed
+  useEffect(() => {
+    if (user) {
+      const exportsDocRef = doc(db, 'users', user.uid, 'cv', 'exports');
+      setDoc(exportsDocRef, { items: exports }).catch(err => {
+        console.error('Failed to save exports history to Firestore:', err);
+      });
+    }
+  }, [exports, user]);
 
   // Automatically sync CV content data when application language changes
   useEffect(() => {
@@ -418,16 +515,6 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
     }
   }, [language]);
-
-  const [exports, setExports] = useState<PDFExportItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('cv_exports_history');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      console.error('Error loading exports history:', e);
-      return [];
-    }
-  });
 
   const loadLanguagePreset = (lang: string) => {
     const preset = sampleCVsByLanguage[lang] || sampleCVsByLanguage.en;
@@ -486,7 +573,7 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   return (
-    <CVContext.Provider value={{ data, setData, loadLanguagePreset, updateTheme, exports, addExport, deleteExport }}>
+    <CVContext.Provider value={{ data, setData, loadLanguagePreset, updateTheme, exports, addExport, deleteExport, isCloudSynced, isSyncing }}>
       {children}
     </CVContext.Provider>
   );

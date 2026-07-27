@@ -1,13 +1,20 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Sparkles, Menu, X, FileText, LayoutTemplate, BookOpen, CreditCard, MapPin } from 'lucide-react';
+import { Sparkles, Menu, X, LayoutTemplate, BookOpen, CreditCard, MapPin, LogOut, Cloud, User } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { LanguageSelector } from '../LanguageSelector';
+import { useAuth } from '../../hooks/useAuth';
+import { AuthModal } from '../auth/AuthModal';
 
 export const Header = () => {
   const location = useLocation();
   const { t } = useLanguage();
+  const { user, logout } = useAuth();
+  
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register'>('login');
+  
   const isEditor = location.pathname === '/cv-generator';
 
   // Close mobile menu on route change
@@ -50,6 +57,38 @@ export const Header = () => {
         {/* Right Actions */}
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
           <LanguageSelector />
+
+          {/* Cloud sync status indicator & User menu */}
+          {user ? (
+            <div className="flex items-center gap-2">
+              <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 text-xs font-bold text-emerald-700">
+                <Cloud className="w-3.5 h-3.5 fill-emerald-100" />
+                <span>Cloud activé</span>
+              </div>
+              <div className="hidden sm:flex items-center gap-2 text-sm font-semibold text-zinc-700 bg-zinc-50 border border-zinc-200/80 rounded-xl px-3 py-2">
+                <User className="w-4 h-4 text-zinc-500" />
+                <span className="max-w-[100px] truncate">{user.displayName || user.email}</span>
+              </div>
+              <button
+                onClick={() => logout()}
+                className="p-2 sm:p-2.5 rounded-xl border border-zinc-200 text-zinc-600 hover:text-red-600 hover:bg-red-50 hover:border-red-100 transition-all cursor-pointer"
+                title="Se déconnecter"
+              >
+                <LogOut className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                setAuthInitialMode('login');
+                setAuthModalOpen(true);
+              }}
+              className="text-xs sm:text-sm font-bold text-zinc-700 hover:text-[#0a0a0a] transition-all bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 px-2.5 py-2 sm:px-4 sm:py-2.5 rounded-xl cursor-pointer"
+            >
+              Connexion
+            </button>
+          )}
+
           <Link
             to="/cv-generator"
             className="btn-premium btn-primary text-xs md:text-sm font-semibold flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5"
@@ -62,7 +101,7 @@ export const Header = () => {
           {/* Mobile Menu Toggle Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-xl text-zinc-700 hover:text-black hover:bg-zinc-100 transition-colors border border-zinc-200/80 min-w-[40px] min-h-[40px] flex items-center justify-center"
+            className="md:hidden p-2 rounded-xl text-zinc-700 hover:text-black hover:bg-zinc-100 transition-colors border border-zinc-200/80 min-w-[40px] min-h-[40px] flex items-center justify-center cursor-pointer"
             aria-label="Menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5 text-zinc-900" /> : <Menu className="w-5 h-5 text-zinc-800" />}
@@ -73,6 +112,25 @@ export const Header = () => {
       {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden border-b border-zinc-200 bg-white/98 backdrop-blur-2xl px-5 py-6 space-y-4 shadow-xl animate-fadeIn">
+          {/* User profile details for mobile */}
+          {user && (
+            <div className="p-3.5 bg-zinc-50 border border-zinc-200/80 rounded-2xl flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                  <User className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-zinc-800 truncate">{user.displayName || 'Utilisateur'}</p>
+                  <p className="text-[10px] font-semibold text-zinc-400 truncate">{user.email}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-[10px] font-bold text-emerald-700">
+                <Cloud className="w-3 h-3 fill-emerald-100" />
+                <span>Cloud</span>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-1">
             <Link
               to="/cv-templates"
@@ -104,7 +162,20 @@ export const Header = () => {
             </Link>
           </div>
 
-          <div className="pt-3 border-t border-zinc-200">
+          <div className="pt-3 border-t border-zinc-200 flex flex-col gap-2.5">
+            {!user && (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setAuthInitialMode('login');
+                  setAuthModalOpen(true);
+                }}
+                className="w-full text-center py-3 rounded-xl font-bold text-zinc-700 hover:text-black bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-sm cursor-pointer"
+              >
+                Se connecter
+              </button>
+            )}
+
             <Link
               to="/cv-generator"
               className="btn-premium btn-primary text-sm font-bold w-full py-3.5 flex items-center justify-center gap-2 shadow-md"
@@ -115,8 +186,13 @@ export const Header = () => {
           </div>
         </div>
       )}
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialMode={authInitialMode}
+      />
     </header>
   );
 };
-
-
