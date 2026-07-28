@@ -14,12 +14,27 @@ interface AuthModalProps {
   initialMode?: 'login' | 'register';
 }
 
-const PasswordSection: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => {
+export const AuthModal: React.FC<AuthModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  initialMode = 'login' 
+}) => {
+  const { login, register, loginWithGoogle, loading, error, clearError } = useAuth();
+  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
+  
+  const formRef = useRef<HTMLFormElement>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [isIframe, setIsIframe] = useState(false);
+
+  // States for password inputs
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Real-time password criteria
   const isMinLength = password.length >= 6;
   const hasUppercase = /[A-Z]/.test(password);
   const hasNumberOrSpecial = /[0-9]/.test(password) || /[^A-Za-z0-9]/.test(password);
@@ -38,135 +53,6 @@ const PasswordSection: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => 
     return 'bg-emerald-500';
   };
 
-  return (
-    <div className="space-y-4">
-      {/* Password Input */}
-      <div className="space-y-1.5">
-        <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider">
-          Mot de passe
-        </label>
-        <div className="relative">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-zinc-400 pointer-events-none">
-            <Lock className="w-4 h-4" />
-          </span>
-          <input
-            type={showPassword ? "text" : "password"}
-            name="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            className="w-full pl-10 pr-10 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 focus:bg-white transition-all font-medium"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 hover:text-zinc-600 cursor-pointer"
-          >
-            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          </button>
-        </div>
-
-        {/* Password Strength Indicator (Register Only) */}
-        {mode === 'register' && password.length > 0 && (
-          <div className="pt-1.5 space-y-2 animate-fadeIn">
-            <div className="flex items-center justify-between text-xs font-semibold">
-              <span className="text-zinc-500">Sécurité du mot de passe :</span>
-              <span className={
-                strengthScore === 1 ? 'text-red-500' :
-                strengthScore === 2 ? 'text-amber-500' : 'text-emerald-500'
-              }>{getStrengthLabel()}</span>
-            </div>
-            {/* Progress Bar */}
-            <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
-              <div 
-                className={`h-full transition-all duration-300 ${getStrengthColorClass()}`}
-                style={{ width: `${(strengthScore / 3) * 100}%` }}
-              />
-            </div>
-            {/* Checklist of requirements */}
-            <ul className="space-y-1 text-[11px] font-medium text-zinc-500">
-              <li className="flex items-center gap-1.5">
-                <span className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border ${isMinLength ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-zinc-50 border-zinc-200 text-zinc-400'}`}>
-                  <Check className="w-2.5 h-2.5" />
-                </span>
-                <span className={isMinLength ? 'text-emerald-600 font-bold' : ''}>Au moins 6 caractères</span>
-              </li>
-              <li className="flex items-center gap-1.5">
-                <span className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border ${hasUppercase ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-zinc-50 border-zinc-200 text-zinc-400'}`}>
-                  <Check className="w-2.5 h-2.5" />
-                </span>
-                <span className={hasUppercase ? 'text-emerald-600 font-bold' : ''}>Au moins une lettre majuscule</span>
-              </li>
-              <li className="flex items-center gap-1.5">
-                <span className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border ${hasNumberOrSpecial ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-zinc-50 border-zinc-200 text-zinc-400'}`}>
-                  <Check className="w-2.5 h-2.5" />
-                </span>
-                <span className={hasNumberOrSpecial ? 'text-emerald-600 font-bold' : ''}>Un chiffre ou caractère spécial</span>
-              </li>
-            </ul>
-          </div>
-        )}
-      </div>
-
-      {/* Confirm Password Input (Register Only) */}
-      {mode === 'register' && (
-        <div className="space-y-1.5">
-          <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider">
-            Confirmer le mot de passe
-          </label>
-          <div className="relative">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-zinc-400 pointer-events-none">
-              <Lock className="w-4 h-4" />
-            </span>
-            <input
-              type={showConfirmPassword ? "text" : "password"}
-              name="confirmPassword"
-              required
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full pl-10 pr-10 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 focus:bg-white transition-all font-medium"
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 hover:text-zinc-600 cursor-pointer"
-            >
-              {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
-          {/* Real-time Mismatch warning */}
-          {confirmPassword.length > 0 && password !== confirmPassword && (
-            <p className="text-[11px] font-bold text-red-500 animate-fadeIn">
-              Les mots de passe ne correspondent pas.
-            </p>
-          )}
-          {confirmPassword.length > 0 && password === confirmPassword && (
-            <p className="text-[11px] font-bold text-emerald-600 flex items-center gap-1 animate-fadeIn">
-              <Check className="w-3.5 h-3.5 text-emerald-600" /> Les mots de passe correspondent.
-            </p>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
-export const AuthModal: React.FC<AuthModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  initialMode = 'login' 
-}) => {
-  const { login, register, loginWithGoogle, loading, error, clearError } = useAuth();
-  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
-  
-  const formRef = useRef<HTMLFormElement>(null);
-  const [localError, setLocalError] = useState<string | null>(null);
-
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [isIframe, setIsIframe] = useState(false);
-
   useEffect(() => {
     setIsIframe(window.self !== window.top);
   }, []);
@@ -177,6 +63,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setLocalError(null);
       clearError();
       setTermsAccepted(false);
+      setPassword('');
+      setConfirmPassword('');
+      setShowPassword(false);
+      setShowConfirmPassword(false);
       if (formRef.current) {
         formRef.current.reset();
       }
@@ -193,8 +83,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     const formData = new FormData(e.currentTarget);
     const emailVal = (formData.get('email') as string || '').trim();
     const nameVal = (formData.get('name') as string || '').trim();
-    const passwordVal = (formData.get('password') as string || '');
-    const confirmPasswordVal = (formData.get('confirmPassword') as string || '');
+    const passwordVal = password;
+    const confirmPasswordVal = confirmPassword;
 
     // 1. Basic validation
     if (!emailVal || !passwordVal) {
@@ -219,11 +109,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setLocalError('Le nom doit contenir au moins 2 caractères.');
         return;
       }
-
-      // Password rules validation
-      const isMinLength = passwordVal.length >= 6;
-      const hasUppercase = /[A-Z]/.test(passwordVal);
-      const hasNumberOrSpecial = /[0-9]/.test(passwordVal) || /[^A-Za-z0-9]/.test(passwordVal);
 
       if (!isMinLength) {
         setLocalError('Le mot de passe doit contenir au moins 6 caractères.');
@@ -276,6 +161,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLocalError(null);
     clearError();
     setTermsAccepted(false);
+    setPassword('');
+    setConfirmPassword('');
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     if (formRef.current) {
       formRef.current.reset();
     }
@@ -292,7 +181,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-md bg-white rounded-2xl border border-zinc-200/80 shadow-2xl overflow-hidden z-10 my-8">
+      <div 
+        onClick={(e) => e.stopPropagation()} 
+        className="relative w-full max-w-md bg-white rounded-2xl border border-zinc-200/80 shadow-2xl overflow-hidden z-10 my-8"
+      >
         
         {/* Decorative Top Accent */}
         <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600" />
@@ -431,8 +323,115 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
             </div>
 
-            {/* Password Fields (Self-contained to prevent high-frequency re-renders) */}
-            <PasswordSection key={mode} mode={mode} />
+            {/* Password Input */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider">
+                Mot de passe
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-zinc-400 pointer-events-none">
+                  <Lock className="w-4 h-4" />
+                </span>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-10 pr-10 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 focus:bg-white transition-all font-medium"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 hover:text-zinc-600 cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+
+              {/* Password Strength Indicator (Register Only) */}
+              {mode === 'register' && password.length > 0 && (
+                <div className="pt-1.5 space-y-2 animate-fadeIn">
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="text-zinc-500">Sécurité du mot de passe :</span>
+                    <span className={
+                      strengthScore === 1 ? 'text-red-500' :
+                      strengthScore === 2 ? 'text-amber-500' : 'text-emerald-500'
+                    }>{getStrengthLabel()}</span>
+                  </div>
+                  {/* Progress Bar */}
+                  <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full transition-all duration-300 ${getStrengthColorClass()}`}
+                      style={{ width: `${(strengthScore / 3) * 100}%` }}
+                    />
+                  </div>
+                  {/* Checklist of requirements */}
+                  <ul className="space-y-1 text-[11px] font-medium text-zinc-500">
+                    <li className="flex items-center gap-1.5">
+                      <span className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border ${isMinLength ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-zinc-50 border-zinc-200 text-zinc-400'}`}>
+                        <Check className="w-2.5 h-2.5" />
+                      </span>
+                      <span className={isMinLength ? 'text-emerald-600 font-bold' : ''}>Au moins 6 caractères</span>
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <span className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border ${hasUppercase ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-zinc-50 border-zinc-200 text-zinc-400'}`}>
+                        <Check className="w-2.5 h-2.5" />
+                      </span>
+                      <span className={hasUppercase ? 'text-emerald-600 font-bold' : ''}>Au moins une lettre majuscule</span>
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <span className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border ${hasNumberOrSpecial ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-zinc-50 border-zinc-200 text-zinc-400'}`}>
+                        <Check className="w-2.5 h-2.5" />
+                      </span>
+                      <span className={hasNumberOrSpecial ? 'text-emerald-600 font-bold' : ''}>Un chiffre ou caractère spécial</span>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            {/* Confirm Password Input (Register Only) */}
+            {mode === 'register' && (
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider">
+                  Confirmer le mot de passe
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-zinc-400 pointer-events-none">
+                    <Lock className="w-4 h-4" />
+                  </span>
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-10 pr-10 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 focus:bg-white transition-all font-medium"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 hover:text-zinc-600 cursor-pointer"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {/* Real-time Mismatch warning */}
+                {confirmPassword.length > 0 && password !== confirmPassword && (
+                  <p className="text-[11px] font-bold text-red-500 animate-fadeIn">
+                    Les mots de passe ne correspondent pas.
+                  </p>
+                )}
+                {confirmPassword.length > 0 && password === confirmPassword && (
+                  <p className="text-[11px] font-bold text-emerald-600 flex items-center gap-1 animate-fadeIn">
+                    <Check className="w-3.5 h-3.5 text-emerald-600" /> Les mots de passe correspondent.
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Terms and Privacy Checkbox (Register Only) */}
             {mode === 'register' && (
