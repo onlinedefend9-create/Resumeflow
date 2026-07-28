@@ -5,7 +5,9 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut,
-  updateProfile
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
@@ -15,6 +17,7 @@ interface AuthContextType {
   error: string | null;
   login: (email: string, pass: string) => Promise<void>;
   register: (name: string, email: string, pass: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
 }
@@ -53,6 +56,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         errMsg = 'Adresse e-mail non valide.';
       } else if (err.code === 'auth/user-disabled') {
         errMsg = 'Ce compte a été désactivé.';
+      } else if (err.code === 'auth/operation-not-allowed') {
+        errMsg = "La méthode d'authentification par e-mail/mot de passe n'est pas activée dans la console Firebase de ce projet. Veuillez l'activer sous l'onglet 'Sign-in method' dans la section 'Authentication' de la console Firebase.";
       }
       setError(errMsg);
       throw new Error(errMsg);
@@ -82,6 +87,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         errMsg = 'Le mot de passe doit contenir au moins 6 caractères.';
       } else if (err.code === 'auth/invalid-email') {
         errMsg = 'Adresse e-mail non valide.';
+      } else if (err.code === 'auth/operation-not-allowed') {
+        errMsg = "La méthode d'authentification par e-mail/mot de passe n'est pas activée dans la console Firebase de ce projet. Veuillez l'activer sous l'onglet 'Sign-in method' dans la section 'Authentication' de la console Firebase.";
+      }
+      setError(errMsg);
+      throw new Error(errMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loginWithGoogle = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    } catch (err: any) {
+      console.error(err);
+      let errMsg = 'Une erreur est survenue lors de la connexion avec Google.';
+      if (err.code === 'auth/popup-blocked') {
+        errMsg = 'Le pop-up de connexion a été bloqué par votre navigateur. Veuillez autoriser les pop-ups pour ce site.';
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        errMsg = 'La fenêtre de connexion a été fermée avant la fin du processus.';
       }
       setError(errMsg);
       throw new Error(errMsg);
@@ -105,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearError = () => setError(null);
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, register, logout, clearError }}>
+    <AuthContext.Provider value={{ user, loading, error, login, register, loginWithGoogle, logout, clearError }}>
       {children}
     </AuthContext.Provider>
   );
