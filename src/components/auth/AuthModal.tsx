@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { X, Mail, Lock, User, Loader2, Sparkles, Eye, EyeOff, Check, AlertCircle } from 'lucide-react';
+import { X, Mail, Lock, User, Loader2, Sparkles, Eye, EyeOff, Check, AlertCircle, ExternalLink } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import * as motionVal from 'motion/react';
 
@@ -31,6 +31,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+
+  const [isIframe, setIsIframe] = useState(false);
+
+  useEffect(() => {
+    setIsIframe(window.self !== window.top);
+  }, []);
 
   // Clear inputs and error on modal open/close
   useEffect(() => {
@@ -205,6 +211,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 : 'Commencez à concevoir des CV exceptionnels avec sauvegarde cloud.'}
             </p>
           </div>
+
+          {/* Iframe warning banner */}
+          {isIframe && (
+            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-850 space-y-3 mb-6 animate-fadeIn">
+              <div className="flex items-start gap-2.5">
+                <AlertCircle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
+                <div className="font-semibold leading-relaxed text-amber-800">
+                  <strong className="font-extrabold text-amber-900 block mb-0.5">⚠️ Environnement d'aperçu d'éditeur</strong>
+                  Pour pouvoir vous connecter ou vous inscrire (E-mail ou Google), vous devez ouvrir l'application dans un nouvel onglet. Les systèmes de sécurité des navigateurs modernes bloquent l'authentification au sein des cadres d'aperçu (iframe).
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => window.open(window.location.href, '_blank')}
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-sm transition-all cursor-pointer"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Ouvrir l'application dans un nouvel onglet</span>
+              </button>
+            </div>
+          )}
 
           {/* Error Message */}
           {activeError && (
