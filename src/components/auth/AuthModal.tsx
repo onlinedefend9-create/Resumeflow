@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { X, Mail, Lock, User, Loader2, Sparkles } from 'lucide-react';
@@ -22,34 +22,48 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const { login, register, loading, error, clearError } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   
-  // Form fields
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // Use a form ref and form state to avoid high frequency keyboard state updates (fixes INP)
+  const formRef = useRef<HTMLFormElement>(null);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  // Clear inputs and error on modal open/close
+  useEffect(() => {
+    if (isOpen) {
+      setLocalError(null);
+      clearError();
+      if (formRef.current) {
+        formRef.current.reset();
+      }
+    }
+  }, [isOpen, clearError]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLocalError(null);
     clearError();
 
-    if (!email || !password) {
+    const formData = new FormData(e.currentTarget);
+    const emailVal = (formData.get('email') as string || '').trim();
+    const passwordVal = formData.get('password') as string || '';
+    const nameVal = (formData.get('name') as string || '').trim();
+
+    if (!emailVal || !passwordVal) {
       setLocalError('Veuillez remplir tous les champs obligatoires.');
       return;
     }
 
-    if (mode === 'register' && !name) {
+    if (mode === 'register' && !nameVal) {
       setLocalError('Veuillez renseigner votre nom.');
       return;
     }
 
     try {
       if (mode === 'login') {
-        await login(email, password);
+        await login(emailVal, passwordVal);
       } else {
-        await register(name, email, password);
+        await register(nameVal, emailVal, passwordVal);
       }
       onClose();
     } catch (err: any) {
@@ -61,6 +75,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setMode(newMode);
     setLocalError(null);
     clearError();
+    if (formRef.current) {
+      formRef.current.reset();
+    }
   };
 
   const activeError = localError || error;
@@ -105,7 +122,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
             
             {/* Error Message */}
             {activeError && (
@@ -126,9 +143,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </span>
                   <input
                     type="text"
+                    name="name"
                     required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
                     placeholder="Jean Dupont"
                     className="w-full pl-10 pr-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 focus:bg-white transition-all font-medium"
                   />
@@ -147,9 +163,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </span>
                 <input
                   type="email"
+                  name="email"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="adresse@exemple.com"
                   className="w-full pl-10 pr-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 focus:bg-white transition-all font-medium"
                 />
@@ -169,9 +184,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </span>
                 <input
                   type="password"
+                  name="password"
                   required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full pl-10 pr-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 focus:bg-white transition-all font-medium"
                 />
