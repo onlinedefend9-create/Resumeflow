@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { X, Mail, Lock, User, Loader2, Sparkles } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
@@ -64,16 +65,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const activeError = localError || error;
 
-  return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-zinc-950/40 backdrop-blur-md transition-opacity" 
+        className="fixed inset-0 bg-zinc-950/50 backdrop-blur-md transition-opacity" 
         onClick={onClose}
       />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-md bg-white rounded-2xl border border-zinc-200/80 shadow-2xl overflow-hidden z-10">
+      <div className="relative w-full max-w-md bg-white rounded-2xl border border-zinc-200/80 shadow-2xl overflow-hidden z-10 my-8">
         
         {/* Decorative Top Accent */}
         <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600" />
@@ -208,6 +209,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
