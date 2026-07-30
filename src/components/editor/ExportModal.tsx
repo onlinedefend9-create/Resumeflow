@@ -4,7 +4,7 @@ import { useCVData } from '../../hooks/useCVData';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { 
   X, Download, Sliders, Globe, Palette, Eye, Sparkles, 
-  Check, FileCheck, Loader2, AlertCircle, RefreshCw, FileText, Trash2
+  Check, FileCheck, Loader2, AlertCircle, RefreshCw, FileText, Trash2, Printer
 } from 'lucide-react';
 import { exportToPDF, ExportPDFOptions } from '../../lib/pdfExport';
 
@@ -16,6 +16,14 @@ interface ExportModalProps {
 export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => {
   const { data, setData, addExport } = useCVData();
   const { language, setLanguage, t } = useLanguage();
+
+  const [isInIframe, setIsInIframe] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsInIframe(window.self !== window.top);
+    }
+  }, []);
 
   // Export parameters
   const [format, setFormat] = useState<'a4' | 'letter'>('a4');
@@ -103,11 +111,11 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
       // Small delay to make it feel robust and let user read steps
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      const uri = await exportToPDF('cv-canvas', filename, options);
+      const result = await exportToPDF('cv-canvas', filename, options);
       
-      if (uri) {
-        setGeneratedPdfUri(uri);
-        addExport(filename, uri);
+      if (result) {
+        setGeneratedPdfUri(result.blobUrl);
+        addExport(filename, result.dataUri);
       } else {
         throw new Error(language === 'fr' ? "La génération du PDF a échoué sans code d'erreur" : "PDF generation failed silently");
       }
@@ -132,15 +140,15 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 print:hidden no-print">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-zinc-950/45 backdrop-blur-md transition-opacity" 
+        className="fixed inset-0 bg-zinc-950/45 backdrop-blur-md transition-opacity print:hidden no-print" 
         onClick={onClose}
       />
 
       {/* Modal Card */}
-      <div className="relative w-full max-w-4xl bg-white rounded-2xl border border-zinc-200/80 shadow-2xl overflow-hidden z-10 flex flex-col md:flex-row h-[90vh] md:h-auto max-h-[92vh]">
+      <div className="relative w-full max-w-4xl bg-white rounded-2xl border border-zinc-200/80 shadow-2xl overflow-hidden z-10 flex flex-col md:flex-row h-[90vh] md:h-auto max-h-[92vh] print:hidden no-print">
         
         {/* Left Side: Advanced Settings */}
         <div className="flex-1 p-6 md:p-8 overflow-y-auto border-b md:border-b-0 md:border-r border-zinc-200/80 flex flex-col justify-between">
@@ -350,8 +358,23 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
               disabled={isGenerating}
               className="flex-1 py-3 px-5 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/10 hover:shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
             >
-              <Download className="w-4 h-4" />
-              <span>Générer le PDF</span>
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>
+                    {language === 'fr' 
+                      ? `Génération (${progress}%)...` 
+                      : language === 'es'
+                        ? `Generando (${progress}%)...`
+                        : `Generating (${progress}%)...`}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" />
+                  <span>Générer le PDF</span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -547,6 +570,15 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
                     <Download className="w-4 h-4" />
                     <span>Télécharger le fichier</span>
                   </a>
+                  
+                  <button
+                    onClick={() => window.print()}
+                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow transition-all cursor-pointer"
+                  >
+                    <Printer className="w-4 h-4" />
+                    <span>Imprimer ou Sauvegarder en PDF</span>
+                  </button>
+
                   <a
                     href={generatedPdfUri}
                     target="_blank"
@@ -557,6 +589,21 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
                     <span>Ouvrir dans un nouvel onglet</span>
                   </a>
                 </div>
+
+                {isInIframe && (
+                  <div className="mt-3 p-3 bg-amber-50/90 border border-amber-100/80 rounded-xl text-left space-y-1">
+                    <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wide flex items-center gap-1">
+                      ⚠️ Remarque sur l'aperçu sécurisé :
+                    </p>
+                    <div className="text-[10px] text-amber-700 font-medium leading-relaxed">
+                      Comme l'application s'exécute dans un environnement d'aperçu sécurisé, votre navigateur peut bloquer les téléchargements de fichiers directs.
+                      <div className="mt-1 space-y-1">
+                        <div>• <strong>Méthode recommandée :</strong> Cliquez sur le bouton violet <strong>"Imprimer ou Sauvegarder en PDF"</strong> ci-dessus et sélectionnez la destination <strong>"Enregistrer au format PDF"</strong>.</div>
+                        <div>• <strong>Alternative :</strong> Cliquez sur <strong>"Ouvrir dans un nouvel onglet"</strong>, puis enregistrez le fichier manuellement avec le raccourci clavier habituel.</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

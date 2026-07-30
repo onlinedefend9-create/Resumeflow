@@ -212,11 +212,178 @@ const insertWatermark = (root: HTMLElement, watermark: ExportPDFOptions['waterma
   }
 };
 
+export interface ExportPDFResult {
+  blobUrl: string;
+  dataUri: string;
+}
+
+const blobToDataURI = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+
+// Converts oklab to rgb/rgba
+const oklabToRgb = (L: number, a: number, b: number, alpha: number = 1): string => {
+  const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+  const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+  const s_ = L - 0.0894841775 * a - 1.2914855480 * b;
+
+  const l = l_ * l_ * l_;
+  const m = m_ * m_ * m_;
+  const s = s_ * s_ * s_;
+
+  let r_lin = +4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
+  let g_lin = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
+  let b_lin = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s;
+
+  const f = (x: number) => (x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055);
+
+  const r_val = Math.round(Math.max(0, Math.min(1, f(r_lin))) * 255);
+  const g_val = Math.round(Math.max(0, Math.min(1, f(g_lin))) * 255);
+  const b_val = Math.round(Math.max(0, Math.min(1, f(b_lin))) * 255);
+
+  return alpha === 1 ? `rgb(${r_val}, ${g_val}, ${b_val})` : `rgba(${r_val}, ${g_val}, ${b_val}, ${alpha})`;
+};
+
+// Converts oklch to rgb/rgba
+const oklchToRgb = (l: number, c: number, h: number, a: number = 1): string => {
+  const hueRad = (h * Math.PI) / 180;
+  const a_lab = c * Math.cos(hueRad);
+  const b_lab = c * Math.sin(hueRad);
+  return oklabToRgb(l, a_lab, b_lab, a);
+};
+
+// Regex-based converter for parsing and replacing oklch() / oklab() in cssText
+const replaceOklchAndOklabInCss = (cssText: string): string => {
+  return cssText.replace(/okl(ch|ab)\(([^)]+)\)/g, (match, type, coords) => {
+    try {
+      const parts = coords.split('/');
+      const colorPartsStr = parts[0].trim();
+      const alphaStr = parts[1] ? parts[1].trim() : null;
+
+      const colorParts = colorPartsStr.split(/[\s,]+/).filter(Boolean);
+      if (colorParts.length < 3) return match;
+
+      const v1 = colorParts[0];
+      const v2 = colorParts[1];
+      const v3 = colorParts[2];
+
+      const parseVal = (valStr: string, isPercent: boolean) => {
+        if (valStr.endsWith('%')) {
+          return parseFloat(valStr) / 100;
+        }
+        const val = parseFloat(valStr);
+        return isPercent ? val / 100 : val;
+      };
+
+      const L = parseVal(v1, v1.endsWith('%'));
+      const val2 = parseFloat(v2);
+      const val3 = parseFloat(v3);
+
+      let alpha = 1;
+      if (alphaStr) {
+        if (alphaStr.endsWith('%')) {
+          alpha = parseFloat(alphaStr) / 100;
+        } else {
+          alpha = parseFloat(alphaStr);
+        }
+      }
+
+      if (isNaN(L) || isNaN(val2) || isNaN(val3)) return match;
+
+      if (type === 'ch') {
+        return oklchToRgb(L, val2, val3, alpha);
+      } else {
+        return oklabToRgb(L, val2, val3, alpha);
+      }
+    } catch (e) {
+      console.error('Error converting oklch/oklab to RGB:', e);
+      return 'rgb(120, 120, 120)';
+    }
+  });
+};
+
+// Scans and sanitizes all stylesheets, replacing oklch/oklab dynamically
+const sanitizeStylesheets = async (): Promise<() => void> => {
+  const styleElements = Array.from(document.querySelectorAll('style'));
+  const linkElements = Array.from(document.querySelectorAll('link[rel="stylesheet"]')) as HTMLLinkElement[];
+  const restoredElements: Array<{ element: HTMLElement; originalContent?: string; wasDisabled?: boolean }> = [];
+
+  // Sanitizing inline style tags
+  for (const styleEl of styleElements) {
+    const content = styleEl.textContent;
+    if (content && (content.includes('oklch') || content.includes('oklab'))) {
+      restoredElements.push({ element: styleEl, originalContent: content });
+      styleEl.textContent = replaceOklchAndOklabInCss(content);
+    }
+  }
+
+  // Sanitizing same-origin stylesheet links on-the-fly
+  for (const linkEl of linkElements) {
+    try {
+      const href = linkEl.href;
+      if (href && (href.startsWith(window.location.origin) || !href.startsWith('http'))) {
+        let hasOkl = false;
+        try {
+          const rules = linkEl.sheet?.cssRules;
+          if (rules) {
+            for (let i = 0; i < rules.length; i++) {
+              const text = rules[i].cssText;
+              if (text.includes('oklch') || text.includes('oklab')) {
+                hasOkl = true;
+                break;
+              }
+            }
+          }
+        } catch (e) {
+          hasOkl = true;
+        }
+
+        if (hasOkl) {
+          const response = await fetch(href);
+          if (response.ok) {
+            const rawCss = await response.text();
+            const cleanCss = replaceOklchAndOklabInCss(rawCss);
+
+            const tempStyle = document.createElement('style');
+            tempStyle.id = 'temp-sanitized-style';
+            tempStyle.textContent = cleanCss;
+            document.head.appendChild(tempStyle);
+
+            linkEl.disabled = true;
+
+            restoredElements.push({ element: linkEl, wasDisabled: false });
+            restoredElements.push({ element: tempStyle });
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to sanitize stylesheet link:', linkEl.href, err);
+    }
+  }
+
+  return () => {
+    for (const item of restoredElements) {
+      if (item.element.id === 'temp-sanitized-style') {
+        item.element.parentNode?.removeChild(item.element);
+      } else if (item.element instanceof HTMLStyleElement && item.originalContent !== undefined) {
+        item.element.textContent = item.originalContent;
+      } else if (item.element instanceof HTMLLinkElement && item.wasDisabled === false) {
+        item.element.disabled = false;
+      }
+    }
+  };
+};
+
 export const exportToPDF = async (
   elementId: string = 'cv-canvas',
   filename: string = 'resume.pdf',
   options: ExportPDFOptions = {}
-): Promise<string | null> => {
+): Promise<ExportPDFResult | null> => {
   const {
     format = 'a4',
     dpi = 'high',
@@ -261,7 +428,44 @@ export const exportToPDF = async (
   
   document.body.appendChild(clone);
 
+  let restoreStyles: (() => void) | null = null;
+  const originalGetComputedStyle = window.getComputedStyle;
+  const originalDefaultViewGetComputedStyle = document.defaultView?.getComputedStyle;
+
   try {
+    // Override window.getComputedStyle to intercept oklch/oklab styles queried by html2canvas
+    window.getComputedStyle = function (elt, pseudoElt) {
+      const style = originalGetComputedStyle(elt, pseudoElt);
+      return new Proxy(style, {
+        get(target, prop, receiver) {
+          const value = Reflect.get(target, prop, receiver);
+          if (typeof value === 'string' && (value.includes('oklch') || value.includes('oklab'))) {
+            return replaceOklchAndOklabInCss(value);
+          }
+          if (typeof value === 'function') {
+            if (prop === 'getPropertyValue') {
+              return function (propertyName: string) {
+                const val = target.getPropertyValue(propertyName);
+                if (typeof val === 'string' && (val.includes('oklch') || val.includes('oklab'))) {
+                  return replaceOklchAndOklabInCss(val);
+                }
+                return val;
+              };
+            }
+            return value.bind(target);
+          }
+          return value;
+        }
+      });
+    };
+
+    if (document.defaultView) {
+      document.defaultView.getComputedStyle = window.getComputedStyle;
+    }
+
+    updateProgress(30, language === 'fr' ? 'Nettoyage des styles modernes (CORS/Color OKLCH)...' : 'Cleaning modern CSS styles...');
+    restoreStyles = await sanitizeStylesheets();
+
     updateProgress(35, language === 'fr' ? 'Configuration des polices...' : 'Configuring fonts...');
     injectGoogleFonts(clone);
     await document.fonts.ready;
@@ -322,18 +526,22 @@ export const exportToPDF = async (
     };
 
     updateProgress(95, language === 'fr' ? 'Finalisation du fichier...' : 'Assembling PDF elements...');
-    const pdfDataUri = await html2pdf().set(opt).from(clone).output('datauristring');
+    const pdfBlob = await html2pdf().set(opt).from(clone).output('blob');
+    const blobUrl = URL.createObjectURL(pdfBlob);
 
-    // standard and highly reliable file download via anchor click
+    // standard and highly reliable file download via anchor click using blobUrl
     const link = document.createElement('a');
-    link.href = pdfDataUri;
+    link.href = blobUrl;
     link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
+    // Convert to data URI for persistent history storage
+    const dataUri = await blobToDataURI(pdfBlob);
+
     updateProgress(100, language === 'fr' ? 'Terminé !' : 'Success !');
-    return pdfDataUri;
+    return { blobUrl, dataUri };
   } catch (err: any) {
     console.error('Advanced PDF generation failed:', err);
     updateProgress(100, language === 'fr' ? 'Erreur, impression par défaut...' : 'Error, printing...');
@@ -341,6 +549,18 @@ export const exportToPDF = async (
     window.print();
     return null;
   } finally {
+    window.getComputedStyle = originalGetComputedStyle;
+    if (document.defaultView && originalDefaultViewGetComputedStyle) {
+      document.defaultView.getComputedStyle = originalDefaultViewGetComputedStyle;
+    }
+
+    if (restoreStyles) {
+      try {
+        restoreStyles();
+      } catch (e) {
+        console.warn('Failed to restore original styles:', e);
+      }
+    }
     // Clean up clone from the DOM
     if (clone.parentNode) {
       clone.parentNode.removeChild(clone);

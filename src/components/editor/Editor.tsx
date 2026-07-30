@@ -25,7 +25,7 @@ export const Editor = () => {
         <Toolbar />
 
         {/* Mobile View Toggle Bar (< lg) */}
-        <div className="lg:hidden bg-zinc-900 border-b border-zinc-800 px-4 py-2 flex items-center justify-center gap-2 shrink-0 text-xs font-semibold text-white">
+        <div className="lg:hidden bg-zinc-900 border-b border-zinc-800 px-4 py-2 flex items-center justify-center gap-2 shrink-0 text-xs font-semibold text-white print:hidden no-print">
           <button
             onClick={() => setMobileMode('sidebar')}
             className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-all ${
@@ -53,7 +53,7 @@ export const Editor = () => {
 
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           {/* Sidebar Area: visible on lg+ or when mobileMode === 'sidebar' on mobile */}
-          <div className={`${mobileMode === 'sidebar' ? 'block' : 'hidden'} lg:block w-full lg:w-80 shrink-0 h-full overflow-y-auto`}>
+          <div className={`${mobileMode === 'sidebar' ? 'block' : 'hidden'} lg:block w-full lg:w-80 shrink-0 h-full overflow-y-auto print:hidden no-print`}>
             <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
           </div>
 

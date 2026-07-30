@@ -13,6 +13,72 @@ export const Sidebar = ({ activeTab = 'sections', setActiveTab }: SidebarProps) 
   const { t, language, setLanguage } = useLanguage();
   const { data, setData, updateTheme, loadLanguagePreset, exports, deleteExport } = useCVData();
 
+  const handleDownloadExport = (dataUri: string, filename: string) => {
+    try {
+      if (dataUri.startsWith('data:')) {
+        const byteString = atob(dataUri.split(',')[1]);
+        const mimeString = dataUri.split(',')[0].split(':')[1].split(';')[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+          ia[i] = byteString.charCodeAt(i);
+        }
+        const blob = new Blob([ab], { type: mimeString });
+        const blobUrl = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      } else {
+        const link = document.createElement('a');
+        link.href = dataUri;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (e) {
+      console.error('Error downloading from history item:', e);
+      const link = document.createElement('a');
+      link.href = dataUri;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleOpenExport = (dataUri: string) => {
+    try {
+      let targetUrl = dataUri;
+      if (dataUri.startsWith('data:')) {
+        const byteString = atob(dataUri.split(',')[1]);
+        const mimeString = dataUri.split(',')[0].split(':')[1].split(';')[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+          ia[i] = byteString.charCodeAt(i);
+        }
+        const blob = new Blob([ab], { type: mimeString });
+        targetUrl = URL.createObjectURL(blob);
+      }
+      const newTab = window.open(targetUrl, '_blank');
+      if (!newTab) {
+        alert(language === 'fr' ? "Impossible d'ouvrir le PDF. Veuillez autoriser les fenêtres pop-up." : "Could not open PDF. Please allow popups.");
+      }
+    } catch (e) {
+      console.error('Error opening history item:', e);
+      const newTab = window.open();
+      if (newTab) {
+        newTab.document.write(`<iframe src="${dataUri}" style="width:100%; height:100%; border:none;"></iframe>`);
+      }
+    }
+  };
+
   const sections = [
     { id: 'header', name: t.editor.headerSection, icon: FileText },
     { id: 'experience', name: t.editor.experienceSection, icon: Briefcase },
@@ -477,20 +543,14 @@ export const Sidebar = ({ activeTab = 'sections', setActiveTab }: SidebarProps) 
                   <span className="text-[9px] text-zinc-500 font-normal">{item.date}</span>
                 </div>
                 <div className="flex items-center gap-2 pt-1.5 border-t border-zinc-800/60">
-                  <a
-                    href={item.dataUri}
-                    download={item.name}
+                  <button
+                    onClick={() => handleDownloadExport(item.dataUri, item.name)}
                     className="flex-1 py-1 px-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold text-center transition-all cursor-pointer"
                   >
                     {language === 'fr' ? 'Télécharger' : 'Download'}
-                  </a>
+                  </button>
                   <button
-                    onClick={() => {
-                      const newTab = window.open();
-                      if (newTab) {
-                        newTab.document.write(`<iframe src="${item.dataUri}" style="width:100%; height:100%; border:none;"></iframe>`);
-                      }
-                    }}
+                    onClick={() => handleOpenExport(item.dataUri)}
                     className="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-bold transition-all cursor-pointer"
                   >
                     {language === 'fr' ? 'Ouvrir' : 'Open'}

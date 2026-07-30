@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { CVData, CVTheme, TemplateId, PDFExportItem } from '../types/cv';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -459,20 +459,33 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [searchParams]);
 
+  const isFirstMount = useRef(true);
+
   // Persist to localStorage and Firestore (debounced to avoid blocking UI updates on rapid typing)
   useEffect(() => {
-    const handler = setTimeout(async () => {
-      localStorage.setItem('cv-data-v3', JSON.stringify(data));
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
 
-      if (user) {
-        try {
-          const dataDocRef = doc(db, 'users', user.uid, 'cv', 'data');
-          await setDoc(dataDocRef, data);
-          setIsCloudSynced(true);
-        } catch (err) {
-          console.error('Failed to save CV data to Firestore:', err);
-          setIsCloudSynced(false);
+    setIsSyncing(true);
+
+    const handler = setTimeout(async () => {
+      try {
+        localStorage.setItem('cv-data-v3', JSON.stringify(data));
+
+        if (user) {
+          try {
+            const dataDocRef = doc(db, 'users', user.uid, 'cv', 'data');
+            await setDoc(dataDocRef, data);
+            setIsCloudSynced(true);
+          } catch (err) {
+            console.error('Failed to save CV data to Firestore:', err);
+            setIsCloudSynced(false);
+          }
         }
+      } finally {
+        setIsSyncing(false);
       }
     }, 500);
 
