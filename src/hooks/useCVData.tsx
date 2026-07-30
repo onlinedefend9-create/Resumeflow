@@ -16,6 +16,8 @@ export interface CVContextType {
   deleteExport: (id: string) => void;
   isCloudSynced: boolean;
   isSyncing: boolean;
+  editorTheme: 'light' | 'dark';
+  setEditorTheme: (theme: 'light' | 'dark') => void;
 }
 
 const CVContext = createContext<CVContextType | undefined>(undefined);
@@ -318,6 +320,15 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isCloudSynced, setIsCloudSynced] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
+  const [editorTheme, setEditorThemeState] = useState<'light' | 'dark'>(() => {
+    return (localStorage.getItem('cv_editor_theme') as 'light' | 'dark') || 'light';
+  });
+
+  const setEditorTheme = (theme: 'light' | 'dark') => {
+    setEditorThemeState(theme);
+    localStorage.setItem('cv_editor_theme', theme);
+  };
+
   const [data, setData] = useState<CVData>(() => {
     // Read URL parameters
     const urlTemplate = searchParams.get('template') as TemplateId | null;
@@ -586,7 +597,7 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   return (
-    <CVContext.Provider value={{ data, setData, loadLanguagePreset, updateTheme, exports, addExport, deleteExport, isCloudSynced, isSyncing }}>
+    <CVContext.Provider value={{ data, setData, loadLanguagePreset, updateTheme, exports, addExport, deleteExport, isCloudSynced, isSyncing, editorTheme, setEditorTheme }}>
       {children}
     </CVContext.Provider>
   );

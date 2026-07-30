@@ -5,16 +5,22 @@ import { Canvas } from './Canvas';
 import { SEO } from '../SEO';
 import { SlidersHorizontal, Eye } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageContext';
+import { useCVData } from '../../hooks/useCVData';
 
 export const Editor = () => {
   const [activeTab, setActiveTab] = useState('sections');
   const [mobileMode, setMobileMode] = useState<'sidebar' | 'canvas'>('sidebar');
   const { language } = useLanguage();
+  const { editorTheme } = useCVData();
 
   const isFr = language === 'fr';
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-zinc-100/70 text-[#0a0a0a] font-sans overflow-hidden">
+    <div className={`flex flex-col lg:flex-row h-screen font-sans overflow-hidden transition-colors duration-300 ${
+      editorTheme === 'dark' 
+        ? 'editor-dark-mode bg-zinc-950 text-zinc-100' 
+        : 'bg-zinc-100/70 text-[#0a0a0a]'
+    }`}>
       <SEO
         title="Éditeur de CV Visuel | ResumeFlow"
         description="Créez et personnalisez votre CV en temps réel avec notre éditeur visuel glisser-déposer."
@@ -58,7 +64,9 @@ export const Editor = () => {
           </div>
 
           {/* Canvas Editing Space: visible on lg+ or when mobileMode === 'canvas' on mobile */}
-          <main className={`${mobileMode === 'canvas' ? 'block' : 'hidden'} lg:block flex-1 overflow-y-auto p-3 sm:p-6 md:p-10 bg-zinc-100/80`}>
+          <main className={`${mobileMode === 'canvas' ? 'block' : 'hidden'} lg:block flex-1 overflow-y-auto p-3 sm:p-6 md:p-10 transition-colors duration-300 ${
+            editorTheme === 'dark' ? 'bg-zinc-900/60' : 'bg-zinc-100/80'
+          }`}>
             <div className="w-full max-w-4xl mx-auto py-2 sm:py-4">
               <Canvas />
             </div>
@@ -68,5 +76,6 @@ export const Editor = () => {
     </div>
   );
 };
+
 
 

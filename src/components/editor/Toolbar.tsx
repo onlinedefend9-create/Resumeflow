@@ -1,4 +1,4 @@
-import { Download, Check, Share2, Printer, X, Sparkles, Eye, FileCheck, Cloud, Loader2 } from 'lucide-react';
+import { Download, Check, Share2, Printer, X, Sparkles, Eye, FileCheck, Cloud, Loader2, Sun, Moon } from 'lucide-react';
 import { useState } from 'react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { LanguageSelector } from '../LanguageSelector';
@@ -19,7 +19,7 @@ export const Toolbar = ({}: ToolbarProps) => {
   const [showModal, setShowModal] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const { t, language } = useLanguage();
-  const { data, isCloudSynced, isSyncing } = useCVData();
+  const { data, isCloudSynced, isSyncing, editorTheme, setEditorTheme } = useCVData();
   const { user } = useAuth();
 
   const getLocalSaveStatusText = () => {
@@ -76,18 +76,28 @@ export const Toolbar = ({}: ToolbarProps) => {
   };
 
   return (
-    <div className="h-14 sm:h-16 border-b border-zinc-200/80 bg-white/90 backdrop-blur-xl flex items-center justify-between px-3 sm:px-6 md:px-10 sticky top-0 z-30 transition-all shrink-0 print:hidden no-print">
+    <div className={`h-14 sm:h-16 border-b flex items-center justify-between px-3 sm:px-6 md:px-10 sticky top-0 z-30 transition-all shrink-0 print:hidden no-print ${
+      editorTheme === 'dark'
+        ? 'border-zinc-800 bg-zinc-900/90 text-white backdrop-blur-xl'
+        : 'border-zinc-200/80 bg-white/90 text-[#0a0a0a] backdrop-blur-xl'
+    }`}>
       <div className="flex items-center gap-2 sm:gap-3">
-        <h2 className="font-extrabold text-[#0a0a0a] text-xs sm:text-sm md:text-base">{t.editor.editorTitle}</h2>
-        <span className="text-zinc-300 hidden xs:inline">/</span>
+        <h2 className={`font-extrabold text-xs sm:text-sm md:text-base ${
+          editorTheme === 'dark' ? 'text-zinc-100' : 'text-[#0a0a0a]'
+        }`}>{t.editor.editorTitle}</h2>
+        <span className={`hidden xs:inline ${editorTheme === 'dark' ? 'text-zinc-700' : 'text-zinc-300'}`}>/</span>
         
         {/* Sync Status Badge */}
         {user ? (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100/60 text-[10px] sm:text-xs font-bold text-emerald-700 select-none animate-fadeIn">
+          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold select-none animate-fadeIn ${
+            editorTheme === 'dark'
+              ? 'bg-emerald-950/40 border border-emerald-900/50 text-emerald-400'
+              : 'bg-emerald-50 border border-emerald-100/60 text-emerald-700'
+          }`}>
             {isSyncing ? (
-              <Loader2 className="w-3 h-3 text-emerald-600 animate-spin" />
+              <Loader2 className="w-3 h-3 text-emerald-400 animate-spin" />
             ) : (
-              <Cloud className="w-3.5 h-3.5 text-emerald-600 fill-emerald-100" />
+              <Cloud className="w-3.5 h-3.5 text-emerald-400 fill-emerald-950/20" />
             )}
             <span className="hidden sm:inline">
               {getCloudSaveStatusText()}
@@ -99,11 +109,15 @@ export const Toolbar = ({}: ToolbarProps) => {
         ) : (
           <div className="flex items-center gap-2">
             {/* Local Save Status */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-50 border border-zinc-200/60 text-[10px] sm:text-xs font-semibold text-zinc-600 select-none animate-fadeIn">
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-semibold select-none animate-fadeIn ${
+              editorTheme === 'dark'
+                ? 'bg-zinc-800/60 border border-zinc-700/60 text-zinc-300'
+                : 'bg-zinc-50 border border-zinc-200/60 text-zinc-600'
+            }`}>
               {isSyncing ? (
-                <Loader2 className="w-3 h-3 text-zinc-500 animate-spin" />
+                <Loader2 className="w-3 h-3 text-zinc-400 animate-spin" />
               ) : (
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <Check className="w-3.5 h-3.5 text-emerald-500" />
               )}
               <span>
                 {getLocalSaveStatusText()}
@@ -112,10 +126,14 @@ export const Toolbar = ({}: ToolbarProps) => {
             
             <button
               onClick={() => setAuthModalOpen(true)}
-              className="hidden xs:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 text-[10px] sm:text-xs font-bold text-indigo-700 transition-all cursor-pointer"
+              className={`hidden xs:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold transition-all cursor-pointer border ${
+                editorTheme === 'dark'
+                  ? 'bg-indigo-950/40 hover:bg-indigo-900/60 border-indigo-900/50 text-indigo-400'
+                  : 'bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 text-indigo-700'
+              }`}
               title={language === 'fr' ? 'Sauvegardez vos données dans le Cloud' : 'Save your data in the Cloud'}
             >
-              <Cloud className="w-3.5 h-3.5 text-indigo-600" />
+              <Cloud className="w-3.5 h-3.5" />
               <span>{language === 'fr' ? 'Sauvegarder en ligne' : 'Save online'}</span>
             </button>
           </div>
@@ -125,24 +143,45 @@ export const Toolbar = ({}: ToolbarProps) => {
       <div className="flex items-center gap-1.5 sm:gap-3">
         <LanguageSelector compact />
 
+        {/* Theme Toggle Button */}
+        <button
+          onClick={() => setEditorTheme(editorTheme === 'dark' ? 'light' : 'dark')}
+          className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center ${
+            editorTheme === 'dark'
+              ? 'border-zinc-800 bg-zinc-800/80 text-amber-400 hover:bg-zinc-800 hover:text-amber-300 shadow-sm'
+              : 'border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 hover:border-zinc-300 shadow-xs'
+          }`}
+          title={editorTheme === 'dark' ? (language === 'fr' ? 'Passer en mode clair' : 'Switch to light mode') : (language === 'fr' ? 'Passer en mode sombre' : 'Switch to dark mode')}
+        >
+          {editorTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
+
         <button
           onClick={handleShare}
-          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl border border-zinc-200 bg-white text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 transition-all"
+          className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl border transition-all ${
+            editorTheme === 'dark'
+              ? 'border-zinc-800 bg-zinc-800/80 text-zinc-300 hover:bg-zinc-800 hover:text-white'
+              : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300'
+          }`}
         >
-          {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5" />}
+          {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5" />}
           <span>{copied ? t.editor.linkCopied : t.editor.share}</span>
         </button>
 
         <button
           onClick={handlePrint}
-          className="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-zinc-200 bg-white text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 transition-all cursor-pointer"
+          className={`hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-xl border transition-all cursor-pointer ${
+            editorTheme === 'dark'
+              ? 'border-zinc-800 bg-zinc-800/80 text-zinc-300 hover:bg-zinc-800 hover:text-white'
+              : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300'
+          }`}
           title={t.editor.print}
         >
-          <Printer className="w-3.5 h-3.5 text-zinc-600" />
+          <Printer className="w-3.5 h-3.5" />
           <span>{t.editor.print}</span>
         </button>
 
-        <div className="w-px h-5 bg-zinc-200 hidden sm:block mx-0.5" />
+        <div className={`w-px h-5 hidden sm:block mx-0.5 ${editorTheme === 'dark' ? 'bg-zinc-800' : 'bg-zinc-200'}`} />
 
         <button
           onClick={handleExport}

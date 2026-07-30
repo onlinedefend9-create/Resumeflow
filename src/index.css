@@ -95,3 +95,50 @@
   margin-bottom: 6mm !important;
 }
 
+/* Dark mode overrides for the visual editor */
+.editor-dark-mode input[type="text"],
+.editor-dark-mode textarea,
+.editor-dark-mode select {
+  background-color: #18181b !important;
+  color: #f4f4f5 !important;
+  border-color: #27272a !important;
+}
+
+.editor-dark-mode input[type="text"]:focus,
+.editor-dark-mode textarea:focus,
+.editor-dark-mode select:focus {
+  border-color: #ff2d8d !important;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 45, 141, 0.15);
+}
+
+.editor-dark-mode .bg-white {
+  background-color: #18181b !important;
+  color: #f4f4f5 !important;
+}
+
+.editor-dark-mode .border-zinc-200 {
+  border-color: #27272a !important;
+}
+
+.editor-dark-mode .text-zinc-700 {
+  color: #d4d4d8 !important;
+}
+
+.editor-dark-mode .text-zinc-600 {
+  color: #a1a1aa !important;
+}
+
+.editor-dark-mode .text-zinc-500 {
+  color: #71717a !important;
+}
+
+.editor-dark-mode .bg-zinc-50 {
+  background-color: #18181b !important;
+}
+
+.editor-dark-mode .bg-zinc-100 {
+  background-color: #27272a !important;
+}
+
+

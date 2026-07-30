@@ -314,6 +314,48 @@ Origine JavaScript Attendue (GCP): https://${diagnostics.hostname}
             </div>
           </div>
 
+          {/* Popup-blocked Specific Guide */}
+          {diagnostics.code === 'auth/popup-blocked' && (
+            <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
+                <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wide">Comment résoudre cette erreur immédiate</h4>
+              </div>
+              <div className="text-xs text-zinc-300 space-y-2.5 leading-relaxed">
+                <div className="flex gap-2">
+                  <span className="flex items-center justify-center w-5 h-5 bg-amber-500/20 text-amber-400 text-[11px] font-bold rounded-full shrink-0">1</span>
+                  <div>
+                    <strong className="text-zinc-200">Autoriser les popups dans le navigateur :</strong>
+                    <p className="mt-1 text-zinc-400 text-[11px]">
+                      Dans la barre d'adresse de Chrome (à droite, près de la petite icône avec une croix rouge ou un bouclier), cliquez sur l'icône de blocage de popup.
+                    </p>
+                    <p className="mt-1 text-zinc-400 text-[11px]">
+                      Sélectionnez <span className="text-amber-400 font-semibold">"Toujours autoriser les fenêtres surgissantes et les redirections pour {diagnostics.hostname}"</span>, puis cliquez sur <strong className="text-zinc-200">OK</strong>.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <span className="flex items-center justify-center w-5 h-5 bg-amber-500/20 text-amber-400 text-[11px] font-bold rounded-full shrink-0">2</span>
+                  <div>
+                    <strong className="text-zinc-200">Désactiver temporairement les bloqueurs de pub :</strong>
+                    <p className="mt-1 text-zinc-400 text-[11px]">
+                      Si vous utilisez un bloqueur de publicités ou de scripts (AdBlock, uBlock, Brave Shield, etc.), mettez temporairement en liste blanche ou désactivez-le pour le domaine <span className="font-mono text-amber-400">{diagnostics.hostname}</span>.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <span className="flex items-center justify-center w-5 h-5 bg-amber-500/20 text-amber-400 text-[11px] font-bold rounded-full shrink-0">3</span>
+                  <div>
+                    <strong className="text-zinc-200">Recharger et réessayer :</strong>
+                    <p className="mt-1 text-zinc-400 text-[11px]">
+                      Rafraîchissez la page (bouton ci-dessous ou F5), puis cliquez à nouveau sur <strong className="text-zinc-200">Se connecter avec Google</strong>. La popup s'ouvrira directement !
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Environmental parameters list */}
           <div className="space-y-2">
             <h5 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Paramètres système actuels</h5>

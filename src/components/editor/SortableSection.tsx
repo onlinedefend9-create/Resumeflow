@@ -1,8 +1,63 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Edit3, Check } from 'lucide-react';
+import { GripVertical, Edit3, Check, Sparkles, Plus } from 'lucide-react';
 import { CVSection, CVTheme } from '../../types/cv';
 import { useState, useEffect } from 'react';
+import { useCVData } from '../../hooks/useCVData';
+
+const SKILL_MAP_FRENCH = [
+  {
+    keywords: ['dev', 'code', 'logiciel', 'software', 'engineer', 'ingénieur', 'informatique', 'programmeur', 'web', 'front', 'back', 'fullstack', 'tech', 'lead', 'architecte', 'concepteur', 'développeur'],
+    skills: ['React', 'TypeScript', 'JavaScript', 'Node.js', 'Next.js', 'HTML5 & CSS3', 'Tailwind CSS', 'Git & GitHub', 'APIs REST', 'SQL / PostgreSQL', 'Docker', 'Python', 'NoSQL', 'Méthodes Agiles']
+  },
+  {
+    keywords: ['design', 'ux', 'ui', 'graph', 'créatif', 'art', 'product designer', 'maquette', 'illustrateur', 'photographe', 'infographiste', 'conception visuelle'],
+    skills: ['Figma', 'Adobe XD', 'Photoshop', 'Illustrator', 'Design System', 'UI/UX Design', 'Prototypage', 'Wireframing', 'InDesign', 'Charte graphique', 'Créativité', 'User Research']
+  },
+  {
+    keywords: ['projet', 'manager', 'product', 'owner', 'scrum', 'agile', 'chef', 'coordinateur', 'coordination', 'gestionnaire'],
+    skills: ['Gestion de projet', 'Méthodes Agiles', 'Scrum / Kanban', 'Jira / Confluence', 'Trello', 'Planification stratégique', 'Roadmap produit', 'Analyse des risques', 'Communication', 'Management d\'équipe']
+  },
+  {
+    keywords: ['commercial', 'sales', 'business', 'vente', 'négociation', 'account', 'client', 'prospection', 'relationnel', 'relation client', 'vendeur'],
+    skills: ['Prospection commerciale', 'Négociation B2B', 'CRM (Salesforce/HubSpot)', 'Fidélisation client', 'Closing', 'Gestion de portefeuille', 'Techniques de vente', 'Esprit d\'équipe', 'Rapport d\'activité']
+  },
+  {
+    keywords: ['marketing', 'communication', 'com', 'seo', 'sea', 'digital', 'growth', 'cm', 'social', 'réseaux', 'média', 'redac', 'rédaction', 'content', 'publicité'],
+    skills: ['Stratégie SEO', 'SEA / Google Ads', 'Réseaux Sociaux', 'Google Analytics', 'Copywriting', 'Content Marketing', 'Canva', 'Email Marketing', 'Campagnes publicitaires', 'HubSpot']
+  },
+  {
+    keywords: ['data', 'analyst', 'scientist', 'bi', 'stat', 'intelligence', 'analytics', 'décisionnel', 'données'],
+    skills: ['Python', 'SQL', 'Tableau', 'Power BI', 'R', 'Machine Learning', 'Microsoft Excel', 'Data Visualization', 'Statistiques descriptives', 'Big Data']
+  },
+  {
+    keywords: ['compta', 'finance', 'gestion', 'audit', 'banque', 'trésorerie', 'fiscal', 'budget', 'comptable', 'trésorier', 'auditeur'],
+    skills: ['Comptabilité générale', 'Analyse financière', 'Modélisation budgétaire', 'Contrôle de gestion', 'Facturation', 'Trésorerie', 'Excel avancé', 'Déclarations fiscales', 'Audit financier']
+  },
+  {
+    keywords: ['rh', 'ressources humaines', 'recrut', 'talent', 'paie', 'social', 'onboard', 'formation', 'recruteur'],
+    skills: ['Recrutement', 'Gestion des talents', 'Droit du travail', 'Onboarding', 'Gestion de la paie', 'GPEC', 'Climat social', 'Relations écoles', 'RSE']
+  },
+  {
+    keywords: ['admin', 'assistant', 'secréta', 'office', 'accueil', 'planning', 'organisation', 'secrétaire', 'administrative'],
+    skills: ['Gestion administrative', 'Organisation des plannings', 'Facturation', 'Pack Office', 'Saisie de données', 'Accueil physique & téléphonique', 'Rédaction de courriers']
+  },
+  {
+    keywords: ['mécani', 'élec', 'ingénieur', 'technicien', 'production', 'industr', 'qualité', 'hse', 'cad', 'cao', 'dessinateur'],
+    skills: ['CAO / SolidWorks', 'Dessin technique', 'Normes ISO 9001', 'HSE / Sécurité', 'Amélioration continue', 'Lean Manufacturing', 'Maintenance industrielle']
+  }
+];
+
+const DEFAULT_POPULAR_SKILLS = [
+  'Communication',
+  'Travail d\'équipe',
+  'Résolution de problèmes',
+  'Adaptabilité',
+  'Gestion du temps',
+  'Organisation',
+  'Autonomie',
+  'Anglais professionnel'
+];
 
 interface Props {
   key?: string;
@@ -51,6 +106,55 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
     transition,
   };
 
+  const { data, editorTheme } = useCVData();
+
+  const getSuggestions = () => {
+    const headerSection = data?.sections?.find(s => s.type === 'header');
+    const mainTitle = headerSection?.content?.title || '';
+    
+    const experienceSection = data?.sections?.find(s => s.type === 'experience');
+    const experienceRoles = (experienceSection?.content?.items || []).map((item: any) => item.role).filter(Boolean);
+
+    const allTitles = Array.from(new Set([mainTitle, ...experienceRoles].map(t => t.toLowerCase().trim()).filter(Boolean)));
+
+    if (allTitles.length === 0) {
+      return { suggestions: DEFAULT_POPULAR_SKILLS, source: '' };
+    }
+
+    const matchedSkills = new Set<string>();
+    let matchedSource = '';
+
+    for (const title of allTitles) {
+      for (const group of SKILL_MAP_FRENCH) {
+        const matches = group.keywords.some(kw => title.includes(kw) || kw.includes(title));
+        if (matches) {
+          group.skills.forEach(s => matchedSkills.add(s));
+          if (!matchedSource) {
+            matchedSource = title.charAt(0).toUpperCase() + title.slice(1);
+          }
+        }
+      }
+    }
+
+    if (matchedSkills.size === 0) {
+      return { suggestions: DEFAULT_POPULAR_SKILLS, source: '' };
+    }
+
+    return { suggestions: Array.from(matchedSkills).slice(0, 12), source: matchedSource };
+  };
+
+  const handleToggleSkill = (skillName: string) => {
+    const currentList = content.skillsList || [];
+    let updated: string[];
+    const exists = currentList.some((s: string) => s.toLowerCase().trim() === skillName.toLowerCase().trim());
+    if (exists) {
+      updated = currentList.filter((s: string) => s.toLowerCase().trim() !== skillName.toLowerCase().trim());
+    } else {
+      updated = [...currentList, skillName];
+    }
+    handleChange('skillsList', updated);
+  };
+
   const handleChange = (key: string, value: any) => {
     const updated = { ...content, [key]: value };
     setContent(updated);
@@ -67,9 +171,17 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
 
   const renderSectionContent = () => {
     const editForm = (
-      <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-4 text-xs font-sans">
-          <div className="flex justify-between items-center border-b border-zinc-200 pb-2">
-            <span className="font-bold text-zinc-800 uppercase tracking-wider">Édition rapide: {section.type}</span>
+      <div className={`p-4 rounded-xl space-y-4 text-xs font-sans border transition-colors ${
+        editorTheme === 'dark'
+          ? 'bg-zinc-900 border-zinc-800 text-zinc-100'
+          : 'bg-zinc-50 border-zinc-200 text-zinc-900'
+      }`}>
+          <div className={`flex justify-between items-center border-b pb-2 transition-colors ${
+            editorTheme === 'dark' ? 'border-zinc-800' : 'border-zinc-200'
+          }`}>
+            <span className={`font-bold uppercase tracking-wider ${
+              editorTheme === 'dark' ? 'text-zinc-200' : 'text-zinc-800'
+            }`}>Édition rapide: {section.type}</span>
             <button
               onClick={() => setIsEditingInline(false)}
               className="flex items-center gap-1 px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors"
@@ -81,10 +193,16 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
           {section.type === 'header' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Photo Upload Area */}
-              <div className="sm:col-span-2 p-3 bg-zinc-100 rounded-xl border border-zinc-200/80 space-y-2 mb-1">
+              <div className={`sm:col-span-2 p-3 rounded-xl border space-y-2 mb-1 transition-colors ${
+                editorTheme === 'dark'
+                  ? 'bg-zinc-800/40 border-zinc-700/80'
+                  : 'bg-zinc-100 border-zinc-200/80'
+              }`}>
                 <label className="block text-[10px] font-extrabold text-zinc-500 uppercase tracking-wider">Photo de Profil</label>
                 <div className="flex items-center gap-4">
-                  <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-zinc-200 border-2 border-white shadow-md shrink-0">
+                  <div className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 shadow-md shrink-0 transition-colors ${
+                    editorTheme === 'dark' ? 'bg-zinc-800 border-zinc-700' : 'bg-zinc-200 border-white'
+                  }`}>
                     {content.photo ? (
                       <img src={content.photo} alt="Aperçu" className="w-full h-full object-cover" />
                     ) : (
@@ -215,7 +333,11 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
                 />
               </div>
               {(content.items || []).map((item: any, idx: number) => (
-                <div key={idx} className="p-3 bg-white rounded-lg border border-zinc-200 space-y-2">
+                <div key={idx} className={`p-3 rounded-lg border space-y-2 transition-colors ${
+                  editorTheme === 'dark'
+                    ? 'bg-zinc-800/40 border-zinc-700/80'
+                    : 'bg-white border-zinc-200'
+                }`}>
                   <div className="grid grid-cols-2 gap-2">
                     <input
                       type="text"
@@ -258,19 +380,65 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
             </div>
           )}
 
-          {section.type === 'skills' && (
-            <div className="space-y-3">
-              <div>
-                <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Compétences (séparées par des virgules)</label>
-                <input
-                  type="text"
-                  value={(content.skillsList || []).join(', ')}
-                  onChange={(e) => handleChange('skillsList', e.target.value.split(',').map((s: string) => s.trim()))}
-                  className="w-full px-3 py-1.5 rounded-lg border border-zinc-300 bg-white text-zinc-900 text-xs font-semibold"
-                />
+          {section.type === 'skills' && (() => {
+            const { suggestions, source } = getSuggestions();
+            return (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Compétences (séparées par des virgules)</label>
+                  <input
+                    type="text"
+                    value={(content.skillsList || []).join(', ')}
+                    onChange={(e) => handleChange('skillsList', e.target.value.split(',').map((s: string) => s.trim()))}
+                    className="w-full px-3 py-1.5 rounded-lg border border-zinc-300 bg-white text-zinc-900 text-xs font-semibold focus:ring-2 focus:ring-[#ff2d8d] focus:outline-none"
+                  />
+                </div>
+
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wide flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-500 fill-indigo-500/10" />
+                      {source ? `Suggestions pour "${source}"` : 'Compétences populaires'}
+                    </span>
+                    <span className="text-[9px] text-zinc-400 italic">Cliquez pour ajouter/retirer</span>
+                  </div>
+                  
+                  <div className={`flex flex-wrap gap-1.5 p-2 rounded-xl border max-h-40 overflow-y-auto transition-colors ${
+                    editorTheme === 'dark'
+                      ? 'bg-zinc-800/60 border-zinc-700/80'
+                      : 'bg-zinc-100/60 border-zinc-200/50'
+                  }`}>
+                    {suggestions.map((skill, sIdx) => {
+                      const isAdded = (content.skillsList || []).some((s: string) => s.toLowerCase().trim() === skill.toLowerCase().trim());
+                      return (
+                        <button
+                          key={sIdx}
+                          type="button"
+                          onClick={() => handleToggleSkill(skill)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1 cursor-pointer select-none border ${
+                            isAdded
+                              ? (editorTheme === 'dark'
+                                  ? 'bg-indigo-950/80 border-indigo-800 text-indigo-300 font-bold shadow-sm'
+                                  : 'bg-indigo-50 border-indigo-200 text-indigo-700 font-bold shadow-sm')
+                              : (editorTheme === 'dark'
+                                  ? 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:text-white shadow-xs'
+                                  : 'bg-white border-zinc-200/80 text-zinc-600 hover:border-zinc-300 hover:text-zinc-900 shadow-xs')
+                          }`}
+                        >
+                          {isAdded ? (
+                            <Check className="w-3 h-3 text-indigo-600 shrink-0" />
+                          ) : (
+                            <Plus className="w-3 h-3 text-zinc-400 shrink-0" />
+                          )}
+                          <span>{skill}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {section.type === 'education' && (
             <div className="space-y-3">
@@ -284,7 +452,11 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
                 />
               </div>
               {(content.items || []).map((item: any, idx: number) => (
-                <div key={idx} className="p-3 bg-white rounded-lg border border-zinc-200 space-y-2">
+                <div key={idx} className={`p-3 rounded-lg border space-y-2 transition-colors ${
+                  editorTheme === 'dark'
+                    ? 'bg-zinc-800/40 border-zinc-700/80'
+                    : 'bg-white border-zinc-200'
+                }`}>
                   <div className="grid grid-cols-2 gap-2">
                     <input
                       type="text"
