@@ -1,5 +1,5 @@
 // @ts-ignore
-import html2pdfModule from 'html2pdf.js/dist/html2pdf.bundle.min.js';
+import html2pdfModule from 'html2pdf.js';
 
 export interface ExportPDFOptions {
   format?: 'a4' | 'letter';
