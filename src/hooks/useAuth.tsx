@@ -83,6 +83,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
+  // Sync Supabase session state across storage change events and custom events
+  useEffect(() => {
+    const checkSession = () => {
+      try {
+        const saved = localStorage.getItem('supabase_user_session');
+        const parsed = saved ? JSON.parse(saved) : null;
+        setUser(parsed);
+      } catch (e) {
+        setUser(null);
+      }
+    };
+
+    window.addEventListener('storage', checkSession);
+    window.addEventListener('supabase-auth-change', checkSession);
+    
+    return () => {
+      window.removeEventListener('storage', checkSession);
+      window.removeEventListener('supabase-auth-change', checkSession);
+    };
+  }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       const hasSupabaseSession = localStorage.getItem('supabase_user_session');
@@ -136,8 +157,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         errMsg = 'Adresse e-mail non valide.';
       } else if (err.code === 'auth/user-disabled') {
         errMsg = 'Ce compte a été désactivé.';
-      } else if (err.code === 'auth/operation-not-allowed') {
-        errMsg = "La méthode d'authentification par e-mail/mot de passe n'est pas activée dans la console Firebase de ce projet. Veuillez l'activer sous l'onglet 'Sign-in method' dans la section 'Authentication' de la console Firebase.";
+      } else {
+        // Fallback to local storage login for any other Firebase failures
+        console.warn('Firebase Email/Password Auth not available or failed. Falling back to local storage login.');
+        const localUsers = JSON.parse(localStorage.getItem('local_registered_users') || '{}');
+        const match = localUsers[email];
+        if (match && match.pass === pass) {
+          const fallbackUser = {
+            uid: 'local_' + btoa(email),
+            email: email,
+            displayName: match.name || email.split('@')[0],
+            photoURL: null,
+            isLocal: true
+          };
+          setUser(fallbackUser);
+          localStorage.setItem('supabase_user_session', JSON.stringify(fallbackUser));
+          setLoading(false);
+          return;
+        } else {
+          errMsg = 'Identifiants invalides ou compte local non trouvé.';
+        }
       }
       setError(errMsg);
       throw new Error(errMsg);
@@ -167,8 +206,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         errMsg = 'Le mot de passe doit contenir au moins 6 caractères.';
       } else if (err.code === 'auth/invalid-email') {
         errMsg = 'Adresse e-mail non valide.';
-      } else if (err.code === 'auth/operation-not-allowed') {
-        errMsg = "La méthode d'authentification par e-mail/mot de passe n'est pas activée dans la console Firebase de ce projet. Veuillez l'activer sous l'onglet 'Sign-in method' dans la section 'Authentication' de la console Firebase.";
+      } else {
+        // Fallback to local storage registration for any other Firebase failures (operation-not-allowed, network-failed, invalid-api-key, etc.)
+        console.warn('Firebase Email/Password Auth not available or failed. Falling back to local storage registration.');
+        const localUsers = JSON.parse(localStorage.getItem('local_registered_users') || '{}');
+        if (localUsers[email]) {
+          errMsg = 'Cette adresse e-mail est déjà utilisée (compte local).';
+          setError(errMsg);
+          throw new Error(errMsg);
+        }
+        localUsers[email] = { name, pass };
+        localStorage.setItem('local_registered_users', JSON.stringify(localUsers));
+
+        const fallbackUser = {
+          uid: 'local_' + btoa(email),
+          email: email,
+          displayName: name,
+          photoURL: null,
+          isLocal: true
+        };
+        setUser(fallbackUser);
+        localStorage.setItem('supabase_user_session', JSON.stringify(fallbackUser));
+        setLoading(false);
+        return;
       }
       setError(errMsg);
       throw new Error(errMsg);

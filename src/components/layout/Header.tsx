@@ -78,15 +78,12 @@ export const Header = () => {
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => {
-                setAuthInitialMode('login');
-                setAuthModalOpen(true);
-              }}
-              className="text-xs sm:text-sm font-bold text-zinc-700 hover:text-[#0a0a0a] transition-all bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 px-2.5 py-2 sm:px-4 sm:py-2.5 rounded-xl cursor-pointer"
+            <Link
+              to="/login"
+              className="text-xs sm:text-sm font-bold text-zinc-700 hover:text-[#0a0a0a] transition-all bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 px-2.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-center flex items-center justify-center"
             >
               Connexion
-            </button>
+            </Link>
           )}
 
           <Link
@@ -164,16 +161,13 @@ export const Header = () => {
 
           <div className="pt-3 border-t border-zinc-200 flex flex-col gap-2.5">
             {!user && (
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  setAuthInitialMode('login');
-                  setAuthModalOpen(true);
-                }}
-                className="w-full text-center py-3 rounded-xl font-bold text-zinc-700 hover:text-black bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-sm cursor-pointer"
+              <Link
+                to="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full text-center py-3 rounded-xl font-bold text-zinc-700 hover:text-black bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-sm block"
               >
                 Se connecter
-              </button>
+              </Link>
             )}
 
             <Link

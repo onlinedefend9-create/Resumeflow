@@ -15,6 +15,7 @@ import { Pricing } from './pages/Pricing';
 import { Blog } from './pages/Blog';
 import { BlogPostDetail } from './pages/BlogPostDetail';
 import { SitemapPage } from './pages/SitemapPage';
+import { Login } from './pages/Login';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 
@@ -36,6 +37,7 @@ export default function App() {
                     <Route path="/blog" element={<Blog />} />
                     <Route path="/blog/:slug" element={<BlogPostDetail />} />
                     <Route path="/sitemap" element={<SitemapPage />} />
+                    <Route path="/login" element={<Login />} />
                   </Routes>
                 </main>
                 <Footer />

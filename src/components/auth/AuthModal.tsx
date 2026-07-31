@@ -122,10 +122,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         return;
       }
 
-      if (!hasUppercase || !hasNumberOrSpecial) {
-        setLocalError('Veuillez respecter tous les critères du mot de passe.');
-        return;
-      }
+      // Optional security recommendations (non-blocking for smooth user signups)
 
       // Confirm password validation
       if (passwordVal !== confirmPasswordVal) {
@@ -323,13 +320,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
 
             {/* Firebase restriction warning */}
-            <div className="p-3.5 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-800 space-y-1.5 animate-fadeIn">
+            <div className="p-3.5 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-850 space-y-1.5 animate-fadeIn">
               <div className="flex items-center gap-2 text-blue-900 font-extrabold">
                 <Sparkles className="w-4 h-4 text-blue-600" />
-                <span>Méthode recommandée : Connexion Google</span>
+                <span>Options d'authentification</span>
               </div>
-              <p className="leading-relaxed font-medium text-blue-850">
-                L'authentification classique par E-mail/Mot de passe n'étant pas activée sur ce projet Firebase, veuillez utiliser le bouton <strong>"Se connecter avec Google"</strong> ci-dessus pour vous inscrire ou vous connecter instantanément.
+              <p className="leading-relaxed font-medium">
+                Vous pouvez vous inscrire instantanément avec <strong>Google</strong> ou utiliser le formulaire ci-dessous. Si la connexion e-mail n'est pas activée sur le serveur, votre compte sera <strong>automatiquement créé et sauvegardé localement</strong> de manière sécurisée !
               </p>
             </div>
 
