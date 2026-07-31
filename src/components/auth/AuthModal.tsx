@@ -19,7 +19,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose, 
   initialMode = 'login' 
 }) => {
-  const { login, register, loginWithGoogle, loading, error, clearError } = useAuth();
+  const { user, login, register, loginWithGoogle, loading, error, clearError } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   
   const formRef = useRef<HTMLFormElement>(null);
@@ -27,6 +27,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isIframe, setIsIframe] = useState(false);
+
+  // Close modal when user becomes logged in
+  useEffect(() => {
+    if (user) {
+      onClose();
+    }
+  }, [user, onClose]);
 
   // States for password inputs
   const [password, setPassword] = useState('');
@@ -156,6 +163,36 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
+  const handleSupabaseSignIn = async () => {
+    setLocalError(null);
+    clearError();
+    try {
+      const response = await fetch('/api/auth/supabase/url');
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Impossible de récupérer l'URL de connexion Supabase.");
+      }
+      const { url } = await response.json();
+
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+
+      const authWindow = window.open(
+        url,
+        'supabase_oauth_popup',
+        `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes`
+      );
+
+      if (!authWindow) {
+        setLocalError("Le bloqueur de fenêtres pop-up a empêché l'ouverture. Veuillez autoriser les fenêtres pop-up pour ce site.");
+      }
+    } catch (err: any) {
+      setLocalError(err.message || "Erreur lors de la tentative de connexion avec Supabase.");
+    }
+  };
+
   const switchMode = (newMode: 'login' | 'register') => {
     setMode(newMode);
     setLocalError(null);
@@ -248,7 +285,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             type="button"
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 border border-zinc-200 hover:border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-700 hover:text-zinc-900 rounded-xl text-sm font-bold shadow-sm transition-all cursor-pointer disabled:opacity-70 mb-4"
+            className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 border border-zinc-200 hover:border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-700 hover:text-zinc-900 rounded-xl text-sm font-bold shadow-sm transition-all cursor-pointer disabled:opacity-70 mb-3"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -257,6 +294,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
             </svg>
             <span>{mode === 'login' ? 'Se connecter avec Google' : "S'inscrire avec Google"}</span>
+          </button>
+
+          {/* Supabase Sign-In Button */}
+          <button
+            type="button"
+            onClick={handleSupabaseSignIn}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 bg-[#1c1c1c] hover:bg-[#2e2e2e] text-white border border-zinc-800 rounded-xl text-sm font-bold shadow-sm transition-all cursor-pointer disabled:opacity-70 mb-4"
+          >
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21.362 10.108L12.531.5a.514.514 0 00-.89.378l.006 8.358a.258.258 0 01-.416.208L2.392 2.396a.514.514 0 00-.776.62L8.272 23.5a.514.514 0 00.89-.378l-.006-8.358a.258.258 0 01.416-.208l8.847 7.048a.514.514 0 00.776-.62l-6.657-20.484a.257.257 0 01.417-.208l8.847 7.048a.514.514 0 00.56-.736z" fill="#3ECF8E" />
+            </svg>
+            <span>{mode === 'login' ? 'Se connecter avec Supabase' : "S'inscrire avec Supabase"}</span>
           </button>
 
           {/* Divider */}

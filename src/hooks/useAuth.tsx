@@ -36,7 +36,7 @@ export interface DiagnosticState {
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: any | null;
   loading: boolean;
   error: string | null;
   login: (email: string, pass: string) => Promise<void>;
@@ -52,15 +52,46 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any | null>(() => {
+    try {
+      const saved = localStorage.getItem('supabase_user_session');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [diagnostics, setDiagnostics] = useState<DiagnosticState | null>(null);
 
+  // Listen for Supabase OAuth success postMessages
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const origin = event.origin;
+      // Allow AI Studio previews and localhost
+      if (!origin.endsWith('.run.app') && !origin.includes('localhost') && !origin.includes('europe-west2.run.app')) {
+        return;
+      }
+      if (event.data?.type === 'OAUTH_AUTH_SUCCESS' && event.data?.provider === 'supabase') {
+        const supabaseUser = event.data.user;
+        setUser(supabaseUser);
+        localStorage.setItem('supabase_user_session', JSON.stringify(supabaseUser));
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+      const hasSupabaseSession = localStorage.getItem('supabase_user_session');
+      if (currentUser) {
+        localStorage.removeItem('supabase_user_session');
+        setUser(currentUser);
+      } else if (!hasSupabaseSession) {
+        setUser(null);
+      }
       setLoading(false);
     }, (err) => {
       console.error('Erreur Auth:', err);
@@ -194,7 +225,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     setLoading(true);
     try {
+      localStorage.removeItem('supabase_user_session');
       await signOut(auth);
+      setUser(null);
     } catch (err: any) {
       setError(err.message);
     } finally {
