@@ -90,6 +90,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
       dpi,
       compress,
       language,
+      cvData: data,
       theme: {
         accentColor,
         fontFamily
