@@ -4,9 +4,11 @@ import { useLanguage } from '../../i18n/LanguageContext';
 
 export const Footer = () => {
   const location = useLocation();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   if (location.pathname === '/cv-generator') return null;
+
+  const isFr = language === 'fr';
 
   return (
     <footer className="border-t border-zinc-200 bg-white py-16 px-6 md:px-10">
@@ -32,6 +34,9 @@ export const Footer = () => {
           <Link to="/blog" className="hover:text-[#0a0a0a] transition-colors">{t.nav.blog}</Link>
           <Link to="/pricing" className="hover:text-[#0a0a0a] transition-colors">{t.nav.pricing}</Link>
           <Link to="/sitemap" className="hover:text-[#0a0a0a] transition-colors">Sitemap</Link>
+          <Link to="/privacy" className="hover:text-[#0a0a0a] transition-colors">
+            {isFr ? 'Confidentialité' : 'Privacy'}
+          </Link>
           <Link to="/cv-generator" className="hover:text-blue-600 transition-colors font-semibold">{t.nav.createCv}</Link>
         </div>
       </div>
