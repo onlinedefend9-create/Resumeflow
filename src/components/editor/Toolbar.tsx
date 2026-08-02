@@ -19,7 +19,7 @@ export const Toolbar = ({}: ToolbarProps) => {
   const [showModal, setShowModal] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const { t, language } = useLanguage();
-  const { data, isCloudSynced, isSyncing, editorTheme, setEditorTheme } = useCVData();
+  const { data, isCloudSynced, isSyncing, editorTheme, setEditorTheme, autoSaveTime } = useCVData();
   const { user } = useAuth();
 
   const getLocalSaveStatusText = () => {
@@ -29,10 +29,11 @@ export const Toolbar = ({}: ToolbarProps) => {
       if (language === 'de') return 'Speichern...';
       return 'Saving...';
     } else {
-      if (language === 'fr') return 'Enregistré localement';
-      if (language === 'es') return 'Guardado localmente';
-      if (language === 'de') return 'Lokal gespeichert';
-      return 'Saved locally';
+      const timeStr = autoSaveTime ? ` (${autoSaveTime})` : '';
+      if (language === 'fr') return `Enregistré localement${timeStr}`;
+      if (language === 'es') return `Guardado localmente${timeStr}`;
+      if (language === 'de') return `Lokal gespeichert${timeStr}`;
+      return `Saved locally${timeStr}`;
     }
   };
 
@@ -43,10 +44,11 @@ export const Toolbar = ({}: ToolbarProps) => {
       if (language === 'de') return 'Cloud-Speicherung...';
       return 'Cloud saving...';
     } else {
-      if (language === 'fr') return 'Sauvegardé sur le cloud';
-      if (language === 'es') return 'Guardado en la nube';
-      if (language === 'de') return 'In der Cloud gespeichert';
-      return 'Saved to cloud';
+      const timeStr = autoSaveTime ? ` (${autoSaveTime})` : '';
+      if (language === 'fr') return `Sauvegardé sur le cloud${timeStr}`;
+      if (language === 'es') return `Guardado en la nube${timeStr}`;
+      if (language === 'de') return `In der Cloud gespeichert${timeStr}`;
+      return `Saved to cloud${timeStr}`;
     }
   };
 

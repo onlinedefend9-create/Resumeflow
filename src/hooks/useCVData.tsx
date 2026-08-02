@@ -18,6 +18,7 @@ export interface CVContextType {
   isSyncing: boolean;
   editorTheme: 'light' | 'dark';
   setEditorTheme: (theme: 'light' | 'dark') => void;
+  autoSaveTime: string | null;
 }
 
 const CVContext = createContext<CVContextType | undefined>(undefined);
@@ -319,6 +320,7 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [isCloudSynced, setIsCloudSynced] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [autoSaveTime, setAutoSaveTime] = useState<string | null>(null);
 
   const [editorTheme, setEditorThemeState] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('cv_editor_theme') as 'light' | 'dark') || 'light';
@@ -536,6 +538,15 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             setIsCloudSynced(false);
           }
         }
+
+        // Set the visual auto-saved timestamp
+        const now = new Date();
+        const timeString = now.toLocaleTimeString(language === 'fr' ? 'fr-FR' : 'en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        setAutoSaveTime(timeString);
       } finally {
         setIsSyncing(false);
       }
@@ -544,7 +555,42 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => {
       clearTimeout(handler);
     };
-  }, [data, user]);
+  }, [data, user, language]);
+
+  // Periodic active auto-save backup mechanism every 15 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      try {
+        const currentDataStr = JSON.stringify(data);
+        const lastSavedStr = localStorage.getItem('cv-data-v3');
+
+        if (currentDataStr !== lastSavedStr) {
+          localStorage.setItem('cv-data-v3', currentDataStr);
+          localStorage.setItem('cv-data-backup-periodic', currentDataStr);
+
+          const now = new Date();
+          const timeString = now.toLocaleTimeString(language === 'fr' ? 'fr-FR' : 'en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+          setAutoSaveTime(timeString);
+          console.log(`[Backup Engine] Periodic auto-save backup triggered at ${timeString}`);
+
+          if (user) {
+            const dataDocRef = doc(db, 'users', user.uid, 'cv', 'data');
+            setDoc(dataDocRef, data)
+              .then(() => setIsCloudSynced(true))
+              .catch(err => console.warn('Periodic sync to Firestore failed:', err));
+          }
+        }
+      } catch (err) {
+        console.error('Periodic background auto-save failed:', err);
+      }
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [data, user, language]);
 
   // Sync exports history with Firestore when changed
   useEffect(() => {
@@ -638,7 +684,7 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   return (
-    <CVContext.Provider value={{ data, setData, loadLanguagePreset, updateTheme, exports, addExport, deleteExport, isCloudSynced, isSyncing, editorTheme, setEditorTheme }}>
+    <CVContext.Provider value={{ data, setData, loadLanguagePreset, updateTheme, exports, addExport, deleteExport, isCloudSynced, isSyncing, editorTheme, setEditorTheme, autoSaveTime }}>
       {children}
     </CVContext.Provider>
   );
