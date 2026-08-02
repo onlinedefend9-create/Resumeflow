@@ -3,15 +3,16 @@ import { Sidebar } from './Sidebar';
 import { Toolbar } from './Toolbar';
 import { Canvas } from './Canvas';
 import { CVStructureVisualizer } from './CVStructureVisualizer';
+import { CVATSAnalyzer } from './CVATSAnalyzer';
 import { SEO } from '../SEO';
-import { SlidersHorizontal, Eye, FileText, Network } from 'lucide-react';
+import { SlidersHorizontal, Eye, FileText, Network, BrainCircuit } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { useCVData } from '../../hooks/useCVData';
 
 export const Editor = () => {
   const [activeTab, setActiveTab] = useState('sections');
   const [mobileMode, setMobileMode] = useState<'sidebar' | 'canvas'>('sidebar');
-  const [viewMode, setViewMode] = useState<'document' | 'radar'>('document');
+  const [viewMode, setViewMode] = useState<'document' | 'radar' | 'ats'>('document');
   const { language } = useLanguage();
   const { editorTheme } = useCVData();
 
@@ -105,15 +106,33 @@ export const Editor = () => {
                     <Network className="w-3.5 h-3.5" />
                     <span>{isFr ? 'Radar Sémantique (D3)' : 'Semantic Radar (D3)'}</span>
                   </button>
+
+                  <button
+                    onClick={() => setViewMode('ats')}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                      viewMode === 'ats'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : editorTheme === 'dark'
+                          ? 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+                          : 'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50'
+                    }`}
+                  >
+                    <BrainCircuit className="w-3.5 h-3.5" />
+                    <span>{isFr ? 'Optimiseur ATS (IA)' : 'ATS Optimizer (AI)'}</span>
+                  </button>
                 </div>
               </div>
 
               {/* Toggle Content View */}
               {viewMode === 'document' ? (
                 <Canvas />
-              ) : (
+              ) : viewMode === 'radar' ? (
                 <div className="animate-fadeIn">
                   <CVStructureVisualizer />
+                </div>
+              ) : (
+                <div className="animate-fadeIn">
+                  <CVATSAnalyzer />
                 </div>
               )}
 

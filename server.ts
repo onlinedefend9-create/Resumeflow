@@ -508,6 +508,76 @@ Règles de structuration des sections :
     }
   });
 
+  // API to analyze CV compatibility with ATS using Gemini
+  app.post('/api/cv/analyze', async (req, res) => {
+    const { cvData } = req.body;
+
+    if (!cvData) {
+      return res.status(400).json({ error: "Les données du CV sont manquantes." });
+    }
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.6-flash',
+        contents: [
+          `Voici le contenu du CV structuré au format JSON :\n\n${JSON.stringify(cvData, null, 2)}\n\nAnalyse ce CV par rapport aux exigences des systèmes ATS modernes (Applicant Tracking Systems) et fournis un rapport détaillé en français au format JSON.`
+        ],
+        config: {
+          systemInstruction: `Tu es un expert en recrutement international, en algorithmes ATS et en optimisation de CV. Ton rôle est d'analyser de manière critique le CV fourni et de générer un diagnostic complet en français pour aider le candidat à maximiser son score de compatibilité avec les filtres automatisés (ATS) et les recruteurs humains.
+
+Règles de diagnostic :
+1. Score ATS (0-100) : Sois réaliste. Un CV vide ou peu détaillé doit avoir un score faible. Un CV bien fourni avec de bons descriptifs d'expérience doit avoir un score supérieur à 75.
+2. Mots-clés trouvés : Identifie les compétences dures (hard skills), frameworks, méthodologies ou termes clés déjà présents.
+3. Mots-clés manquants : En fonction du titre professionnel ciblé (présent dans l'en-tête), suggère 5 à 8 mots-clés stratégiques ou compétences ultra-pertinentes qui manquent ou mériteraient d'être ajoutés.
+4. Évaluation par section : Analyse l'en-tête (coordonnées, titre, liens), le résumé (accroche), l'expérience (présence de verbes d'action, d'accomplissements quantifiés, clarté), la formation et les compétences.
+5. Sois extrêmement constructif, précis et bienveillant. Toutes les suggestions et diagnostics doivent être rédigés en français professionnel sans jargon inutile.`,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              score: { type: Type.INTEGER },
+              matchingKeywords: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING }
+              },
+              missingKeywords: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING }
+              },
+              sectionEvaluations: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    section: { type: Type.STRING },
+                    status: { type: Type.STRING }, // 'good', 'warning', 'critical'
+                    feedback: { type: Type.STRING },
+                    suggestions: {
+                      type: Type.ARRAY,
+                      items: { type: Type.STRING }
+                    }
+                  },
+                  required: ["section", "status", "feedback", "suggestions"]
+                }
+              },
+              formattingTips: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING }
+              }
+            },
+            required: ["score", "matchingKeywords", "missingKeywords", "sectionEvaluations", "formattingTips"]
+          }
+        }
+      });
+
+      const parsedJSON = JSON.parse(response.text);
+      res.json(parsedJSON);
+    } catch (err: any) {
+      console.error("Gemini ATS analysis error:", err);
+      res.status(500).json({ error: "Une erreur est survenue lors de l'analyse ATS de votre CV : " + (err.message || err) });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
