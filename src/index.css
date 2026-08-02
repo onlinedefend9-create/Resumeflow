@@ -41,23 +41,51 @@
 
 /* Print and PDF Export Styles */
 @media print {
-  body {
+  /* Force all wrapper parents of the canvas to display as block and ignore responsive hidden classes */
+  html, body, #root, #root > div, main, .flex-1, .flex {
+    display: block !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
     background: white !important;
     color: black !important;
-    margin: 0 !important;
     padding: 0 !important;
+    margin: 0 !important;
   }
-  header, footer, sidebar, aside, nav, .no-print, .sticky {
+
+  /* Completely suppress all structural UI layers */
+  header, footer, sidebar, aside, nav, .no-print, .sticky, .print\:hidden, [class*="Sidebar"], [class*="Toolbar"] {
     display: none !important;
   }
+
+  /* Render #cv-canvas in standard page dimension with absolute visual accuracy */
   #cv-canvas {
+    display: block !important;
     position: static !important;
-    width: 100% !important;
+    width: 210mm !important;
     max-width: 100% !important;
-    margin: 0 !important;
-    padding: 10mm !important;
+    margin: 0 auto !important;
+    padding: 15mm !important;
     border: none !important;
     box-shadow: none !important;
+    box-sizing: border-box !important;
+    background-color: white !important;
+    color: black !important;
+    transform: none !important;
+  }
+
+  /* Suppress editing dialogs and components on print canvas */
+  #cv-canvas .section-edit-form,
+  #cv-canvas button,
+  #cv-canvas .no-print,
+  #cv-canvas [class*="absolute"] {
+    display: none !important;
+  }
+
+  #cv-canvas .section-preview-content {
+    display: block !important;
   }
 }
 

@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeFirestore } from 'firebase/firestore';
 
 export const firebaseConfig = {
   projectId: (import.meta as any).env?.VITE_FIREBASE_PROJECT_ID || "ungoogly-team-mdw77",
@@ -15,6 +15,8 @@ export const firebaseConfig = {
 // Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
-const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+}, firebaseConfig.firestoreDatabaseId);
 
 export { app, auth, db };
