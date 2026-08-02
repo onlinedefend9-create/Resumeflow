@@ -17,12 +17,31 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Safe redirect URI resolver supporting proxy SSL termination
+  const getRedirectUri = (req: express.Request, path: string) => {
+    const host = req.get('host') || '';
+    
+    // In local development, use localhost
+    if (host.includes('localhost') || host.includes('127.0.0.1')) {
+      return `http://${host}${path}`;
+    }
+    
+    // In AI Studio preview or cloud deployment, prefer APP_URL to match the registered OAuth redirect URI
+    if (process.env.APP_URL) {
+      const baseUrl = process.env.APP_URL.endsWith('/') ? process.env.APP_URL.slice(0, -1) : process.env.APP_URL;
+      return `${baseUrl}${path}`;
+    }
+    
+    // Fallback to request host
+    return `https://${host}${path}`;
+  };
+
   // Serve JSON parsing middleware
   app.use(express.json());
 
   // API Route for Supabase OAuth URL
   app.get('/api/auth/supabase/url', (req, res) => {
-    const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/supabase/callback`;
+    const redirectUri = getRedirectUri(req, '/api/auth/supabase/callback');
     const clientId = process.env.VITE_SUPABASE_OAUTH_CLIENT_ID || process.env.SUPABASE_OAUTH_CLIENT_ID;
     
     if (!clientId) {
@@ -50,7 +69,7 @@ async function startServer() {
 
     const clientId = process.env.VITE_SUPABASE_OAUTH_CLIENT_ID || process.env.SUPABASE_OAUTH_CLIENT_ID;
     const clientSecret = process.env.VITE_SUPABASE_OAUTH_CLIENT_SECRET || process.env.SUPABASE_OAUTH_CLIENT_SECRET;
-    const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/supabase/callback`;
+    const redirectUri = getRedirectUri(req, '/api/auth/supabase/callback');
 
     if (!clientId || !clientSecret) {
       return res.status(400).send("Identifiants Supabase OAuth manquants.");
@@ -165,7 +184,7 @@ async function startServer() {
 
   // Endpoint to get LinkedIn authorization URL
   app.get('/api/auth/linkedin/url', (req, res) => {
-    const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/linkedin/callback`;
+    const redirectUri = getRedirectUri(req, '/api/auth/linkedin/callback');
     const clientId = process.env.VITE_LINKEDIN_CLIENT_ID || process.env.LINKEDIN_CLIENT_ID;
 
     if (!clientId) {
@@ -183,7 +202,7 @@ async function startServer() {
     const code = req.query.code as string;
     const error = req.query.error as string;
     const errorDescription = req.query.error_description as string;
-    const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/linkedin/callback`;
+    const redirectUri = getRedirectUri(req, '/api/auth/linkedin/callback');
     const clientId = process.env.VITE_LINKEDIN_CLIENT_ID || process.env.LINKEDIN_CLIENT_ID;
     const clientSecret = process.env.VITE_LINKEDIN_CLIENT_SECRET || process.env.LINKEDIN_CLIENT_SECRET;
 

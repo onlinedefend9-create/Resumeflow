@@ -557,6 +557,26 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
   }, [data, user, language]);
 
+  // Sauvegarde synchrone forcée lors de la fermeture inopinée de l'onglet
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      try {
+        const currentDataStr = JSON.stringify(data);
+        const lastSavedStr = localStorage.getItem('cv-data-v3');
+        if (currentDataStr !== lastSavedStr) {
+          localStorage.setItem('cv-data-v3', currentDataStr);
+        }
+      } catch (err) {
+        console.error('Échec de la sauvegarde forcée avant déchargement :', err);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [data]);
+
   // Periodic active auto-save backup mechanism every 15 seconds
   useEffect(() => {
     const interval = setInterval(() => {

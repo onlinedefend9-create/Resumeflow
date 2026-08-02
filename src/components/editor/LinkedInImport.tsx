@@ -53,7 +53,15 @@ export const LinkedInImport: React.FC<LinkedInImportProps> = ({ isOpen, onClose 
   // Handle postMessage for OAuth success/failure
   useEffect(() => {
     const handleOAuthMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
+      // Allow messages from the same origin, other Cloud Run preview domains, or localhost
+      const origin = event.origin;
+      const isValidOrigin = 
+        origin === window.location.origin ||
+        origin.endsWith('.run.app') || 
+        origin.includes('localhost') || 
+        origin.includes('127.0.0.1');
+
+      if (!isValidOrigin) return;
 
       if (event.data && event.data.type === 'LINKEDIN_AUTH_SUCCESS') {
         const profile = event.data.profile;
