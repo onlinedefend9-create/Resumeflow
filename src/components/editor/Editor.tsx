@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Toolbar } from './Toolbar';
 import { Canvas } from './Canvas';
-import { CVRadarDendrogram } from './CVRadarDendrogram';
+import { CVStructureVisualizer } from './CVStructureVisualizer';
 import { SEO } from '../SEO';
 import { SlidersHorizontal, Eye, FileText, Network } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageContext';
@@ -113,7 +113,7 @@ export const Editor = () => {
                 <Canvas />
               ) : (
                 <div className="animate-fadeIn">
-                  <CVRadarDendrogram />
+                  <CVStructureVisualizer />
                 </div>
               )}
 

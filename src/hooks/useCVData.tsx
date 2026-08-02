@@ -4,7 +4,7 @@ import { CVData, CVTheme, TemplateId, PDFExportItem } from '../types/cv';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAuth } from './useAuth';
 import { db } from '../lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, getDocFromCache, setDoc } from 'firebase/firestore';
 
 export interface CVContextType {
   data: CVData;
@@ -389,6 +389,47 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return;
     }
 
+    const getDocWithTimeout = async (docRef: any, timeoutMs = 2000) => {
+      return new Promise<any>((resolve, reject) => {
+        let resolved = false;
+        
+        const timer = setTimeout(async () => {
+          if (!resolved) {
+            try {
+              console.warn(`Firestore request timed out at ${timeoutMs}ms. Resolving from local cache.`);
+              const cachedSnap = await getDocFromCache(docRef);
+              resolved = true;
+              resolve(cachedSnap);
+            } catch (err) {
+              // If there's nothing in the cache yet, let the original query resolve or fail
+            }
+          }
+        }, timeoutMs);
+        
+        getDoc(docRef)
+          .then((snap) => {
+            if (!resolved) {
+              clearTimeout(timer);
+              resolved = true;
+              resolve(snap);
+            }
+          })
+          .catch(async (err) => {
+            if (!resolved) {
+              clearTimeout(timer);
+              try {
+                const cachedSnap = await getDocFromCache(docRef);
+                resolved = true;
+                resolve(cachedSnap);
+              } catch (cacheErr) {
+                resolved = true;
+                reject(err);
+              }
+            }
+          });
+      });
+    };
+
     const loadUserData = async () => {
       try {
         setIsSyncing(true);
@@ -396,29 +437,29 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const exportsDocRef = doc(db, 'users', user.uid, 'cv', 'exports');
 
         const [dataSnap, exportsSnap] = await Promise.all([
-          getDoc(dataDocRef),
-          getDoc(exportsDocRef)
+          getDocWithTimeout(dataDocRef, 2000),
+          getDocWithTimeout(exportsDocRef, 2000)
         ]);
 
         if (!active) return;
 
-        if (dataSnap.exists()) {
+        if (dataSnap && dataSnap.exists()) {
           const cloudData = dataSnap.data() as CVData;
           setData(cloudData);
           localStorage.setItem('cv-data-v3', JSON.stringify(cloudData));
         } else {
           // If no cloud data, seed Firestore with current local data
-          await setDoc(dataDocRef, data);
+          await setDoc(dataDocRef, data).catch(e => console.warn('Failed to seed local data to cloud:', e));
         }
 
-        if (exportsSnap.exists()) {
+        if (exportsSnap && exportsSnap.exists()) {
           const cloudExportsObj = exportsSnap.data();
           const cloudExports = cloudExportsObj.items || [];
           setExports(cloudExports);
           localStorage.setItem('cv_exports_history', JSON.stringify(cloudExports));
         } else {
           // If no cloud exports, seed Firestore with current local exports
-          await setDoc(exportsDocRef, { items: exports });
+          await setDoc(exportsDocRef, { items: exports }).catch(e => console.warn('Failed to seed exports to cloud:', e));
         }
 
         setIsCloudSynced(true);

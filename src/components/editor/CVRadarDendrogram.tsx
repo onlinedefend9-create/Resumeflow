@@ -355,11 +355,17 @@ export const CVRadarDendrogram = () => {
   };
 
   return (
-    <div className={`rounded-2xl border transition-all overflow-hidden flex flex-col h-full lg:min-h-[580px] ${
+    <div className={`rounded-2xl border transition-all overflow-hidden flex flex-col h-full lg:min-h-[580px] shadow-2xl relative ${
       editorTheme === 'dark'
-        ? 'bg-zinc-950 border-zinc-800 text-white'
-        : 'bg-white border-zinc-200 text-zinc-900 shadow-xl'
-    }`} ref={containerRef}>
+        ? 'bg-zinc-950 border-zinc-800/80 text-white'
+        : 'bg-white border-zinc-200/90 text-zinc-900'
+    }`} ref={containerRef} id="cv-radar-root">
+      {/* Background radial accent flare */}
+      <div className={`absolute inset-0 pointer-events-none opacity-25 mix-blend-screen transition-all duration-700 ${
+        editorTheme === 'dark'
+          ? 'bg-[radial-gradient(circle_at_50%_40%,_var(--tw-gradient-stops))] from-blue-950/20 via-transparent to-transparent'
+          : 'bg-[radial-gradient(circle_at_50%_40%,_var(--tw-gradient-stops))] from-blue-50/40 via-transparent to-transparent'
+      }`} />
       
       {/* Header Panel */}
       <div className={`p-4 sm:p-5 border-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0 ${
@@ -425,8 +431,8 @@ export const CVRadarDendrogram = () => {
         <div className="flex-1 min-h-[420px] md:min-h-0 relative flex items-center justify-center p-4">
           <svg
             ref={svgRef}
-            className="w-full h-full max-h-[580px]"
-            style={{ pointerEvents: 'all' }}
+            className="w-full h-full max-h-[580px] border rounded-2xl"
+            style={{ pointerEvents: 'all', borderColor: '#000000' }}
           />
 
           {/* Quick interactive Hint */}
