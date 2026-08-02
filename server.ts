@@ -21,15 +21,15 @@ async function startServer() {
   const getRedirectUri = (req: express.Request, path: string) => {
     const host = req.get('host') || '';
     
-    // In local development, use localhost
-    if (host.includes('localhost') || host.includes('127.0.0.1')) {
-      return `http://${host}${path}`;
-    }
-    
     // In AI Studio preview or cloud deployment, prefer APP_URL to match the registered OAuth redirect URI
     if (process.env.APP_URL) {
       const baseUrl = process.env.APP_URL.endsWith('/') ? process.env.APP_URL.slice(0, -1) : process.env.APP_URL;
       return `${baseUrl}${path}`;
+    }
+    
+    // In local development, use localhost
+    if (host.includes('localhost') || host.includes('127.0.0.1')) {
+      return `http://${host}${path}`;
     }
     
     // Fallback to request host
