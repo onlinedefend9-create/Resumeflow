@@ -33,6 +33,9 @@ export interface DiagnosticState {
   projectId: string;
   authDomain: string;
   timestamp: string;
+  linkedinClientId?: string | null;
+  expectedLinkedinCallback?: string;
+  actualOrigin?: string;
 }
 
 interface AuthContextType {
@@ -100,6 +103,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else if (msgData.type === 'LINKEDIN_AUTH_ERROR') {
         console.error('[useAuth] Échec Authentification LinkedIn détecté ! Erreur :', msgData.error);
         setError(msgData.error || 'L\'authentification avec LinkedIn a échoué.');
+        
+        const host = window.location.hostname;
+        const isProd = host !== 'localhost' && !host.includes('127.0.0.1') && !host.includes('ais-dev-') && !host.includes('ais-pre-');
+        const hasDomainMismatch = isProd && !firebaseConfig.authDomain.includes(host);
+        
+        setDiagnostics({
+          code: 'linkedin/auth-failed',
+          message: msgData.error || 'Erreur lors du processus d\'échange OAuth avec LinkedIn.',
+          hostname: host,
+          isProd,
+          hasDomainMismatch,
+          projectId: firebaseConfig.projectId,
+          authDomain: firebaseConfig.authDomain,
+          timestamp: new Date().toLocaleTimeString('fr-FR'),
+          linkedinClientId: ((import.meta as any).env.VITE_LINKEDIN_CLIENT_ID as string) || null,
+          expectedLinkedinCallback: `${window.location.origin}/api/auth/linkedin/callback`,
+          actualOrigin: window.location.origin
+        });
       }
     };
     window.addEventListener('message', handleMessage);
@@ -161,6 +182,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       projectId: firebaseConfig.projectId,
       authDomain: firebaseConfig.authDomain,
       timestamp: new Date().toLocaleTimeString('fr-FR'),
+      linkedinClientId: ((import.meta as any).env.VITE_LINKEDIN_CLIENT_ID as string) || null,
+      expectedLinkedinCallback: `${window.location.origin}/api/auth/linkedin/callback`,
+      actualOrigin: window.location.origin
     });
   };
 
@@ -349,16 +373,20 @@ const DiagnosticConsole: React.FC<{ diagnostics: DiagnosticState; onClose: () =>
   const [copied, setCopied] = useState(false);
 
   const copyToClipboard = () => {
-    const report = `=== DIAGNOSTIC CONFIGURATION GOOGLE OAUTH ===
+    const report = `=== RAPPORT DE DIAGNOSTIC D'AUTHENTIFICATION (Firebase & LinkedIn) ===
 Date: ${new Date().toLocaleString('fr-FR')}
 Domaine Actuel (Hébergement): ${diagnostics.hostname}
 Projet Firebase ID: ${diagnostics.projectId}
 Domaine Firebase Auth Configuré: ${diagnostics.authDomain}
-Code d'Erreur Firebase: ${diagnostics.code}
+Code d'Erreur: ${diagnostics.code}
 Message d'Erreur: ${diagnostics.message}
 Environnement de Production: ${diagnostics.isProd ? 'Oui' : 'Non'}
 Origine JavaScript Attendue (GCP): https://${diagnostics.hostname}
-=============================================`;
+
+--- CONFIGURATION LINKEDIN OAUTH ---
+ID Client LinkedIn: ${diagnostics.linkedinClientId || 'Non configuré'}
+URL de Redirection Attendue: ${diagnostics.expectedLinkedinCallback || `${window.location.origin}/api/auth/linkedin/callback`}
+========================================================================`;
     
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(report).then(() => {
@@ -547,6 +575,50 @@ Origine JavaScript Attendue (GCP): https://${diagnostics.hostname}
                     className="inline-flex items-center gap-1 text-[11px] text-indigo-400 hover:text-indigo-300 font-bold hover:underline pt-1"
                   >
                     Google Cloud &gt; Identifiants &gt; Client OAuth Web <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+
+              <div className="h-px bg-zinc-800" />
+
+              {/* Check 3: LinkedIn Configuration & Callback URL */}
+              <div className="flex gap-3">
+                <div className="shrink-0 mt-0.5">
+                  {!diagnostics.linkedinClientId ? (
+                    <AlertTriangle className="w-4 h-4 text-amber-500 animate-pulse" />
+                  ) : (
+                    <CheckCircle className="w-4 h-4 text-emerald-500" />
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <span className="font-bold text-zinc-200 block text-[11px]">3. Configuration LinkedIn OAuth</span>
+                  <p className="text-zinc-400 leading-relaxed text-[11px]">
+                    Vérifiez que votre identifiant client LinkedIn est configuré et que l'URL de redirection autorisée correspond parfaitement à votre environnement actuel dans la console développeur LinkedIn.
+                  </p>
+                  
+                  <div className="space-y-1.5 pt-1">
+                    <div>
+                      <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">ID Client LinkedIn (Client-side)</span>
+                      <code className="bg-zinc-900 px-1.5 py-1 rounded font-mono text-zinc-300 border border-zinc-800 text-[10px] block truncate">
+                        {diagnostics.linkedinClientId || 'Non configuré (définissez VITE_LINKEDIN_CLIENT_ID)'}
+                      </code>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">URL de redirection attendue</span>
+                      <p className="text-zinc-400 leading-relaxed text-[10px] bg-zinc-900 p-1.5 rounded font-mono select-all text-indigo-400 border border-zinc-800 flex items-center justify-between">
+                        <span>{diagnostics.expectedLinkedinCallback || `${window.location.origin}/api/auth/linkedin/callback`}</span>
+                        <span className="text-[9px] bg-indigo-500/10 px-1 py-0.5 rounded text-indigo-300 font-sans shrink-0 ml-1">À copier</span>
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <a 
+                    href="https://www.linkedin.com/developers/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] text-indigo-400 hover:text-indigo-300 font-bold hover:underline pt-1.5"
+                  >
+                    Console LinkedIn Developer Portal <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
               </div>

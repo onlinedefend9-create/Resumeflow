@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Briefcase, GraduationCap, Award, FolderKanban, FileText, ArrowLeft, Palette, LayoutTemplate, Languages, Check, Sparkles, Zap, Download, Eye, X, Linkedin } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { useCVData } from '../../hooks/useCVData';
+import { useLinkedInImport } from '../../hooks/useLinkedInImport';
 import { TemplateId } from '../../types/cv';
 import { LinkedInImport } from './LinkedInImport';
 
@@ -15,6 +16,7 @@ export const Sidebar = ({ activeTab = 'sections', setActiveTab }: SidebarProps) 
   const { t, language, setLanguage } = useLanguage();
   const { data, setData, updateTheme, loadLanguagePreset, exports, deleteExport } = useCVData();
   const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
+  const { LinkedInImportButton } = useLinkedInImport();
 
   const handleDownloadExport = (dataUri: string, filename: string) => {
     try {
@@ -260,13 +262,15 @@ export const Sidebar = ({ activeTab = 'sections', setActiveTab }: SidebarProps) 
                     <p className="text-[10px] text-zinc-400 font-medium">Importez votre profil LinkedIn</p>
                   </div>
                 </div>
+                
+                <LinkedInImportButton />
+
                 <button
                   type="button"
                   onClick={() => setIsLinkedInModalOpen(true)}
-                  className="w-full py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                  className="w-full text-center text-[10px] text-zinc-400 hover:text-white transition-colors underline font-semibold mt-1"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Importer depuis LinkedIn</span>
+                  Ou utiliser l'analyseur de texte IA (Copier/Coller)
                 </button>
               </div>
 
