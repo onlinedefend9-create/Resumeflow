@@ -65,7 +65,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [diagnostics, setDiagnostics] = useState<DiagnosticState | null>(null);
 
-  // Listen for Supabase OAuth success postMessages
+  // Log authentication state changes
+  useEffect(() => {
+    console.log('[useAuth] État de l\'utilisateur modifié :', {
+      isAuthenticated: !!user,
+      uid: user?.uid || user?.id || null,
+      email: user?.email || null,
+      displayName: user?.displayName || user?.name || null,
+      provider: user?.isLocal ? 'local' : (user?.app_metadata?.provider || 'firebase')
+    });
+  }, [user]);
+
+  // Listen for Supabase and LinkedIn OAuth success/failure postMessages with detailed logging
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       const origin = event.origin;
@@ -73,10 +84,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!origin.endsWith('.run.app') && !origin.includes('localhost') && !origin.includes('europe-west2.run.app')) {
         return;
       }
-      if (event.data?.type === 'OAUTH_AUTH_SUCCESS' && event.data?.provider === 'supabase') {
-        const supabaseUser = event.data.user;
+
+      const msgData = event.data;
+      if (!msgData || typeof msgData !== 'object') return;
+
+      console.log('[useAuth] postMessage reçu de l\'origine :', origin, 'Données :', msgData);
+
+      if (msgData.type === 'OAUTH_AUTH_SUCCESS' && msgData.provider === 'supabase') {
+        console.log('[useAuth] Succès OAuth Supabase détecté ! Utilisateur :', msgData.user);
+        const supabaseUser = msgData.user;
         setUser(supabaseUser);
         localStorage.setItem('supabase_user_session', JSON.stringify(supabaseUser));
+      } else if (msgData.type === 'LINKEDIN_AUTH_SUCCESS') {
+        console.log('[useAuth] Succès Authentification LinkedIn détecté ! Profil :', msgData.profile);
+      } else if (msgData.type === 'LINKEDIN_AUTH_ERROR') {
+        console.error('[useAuth] Échec Authentification LinkedIn détecté ! Erreur :', msgData.error);
+        setError(msgData.error || 'L\'authentification avec LinkedIn a échoué.');
       }
     };
     window.addEventListener('message', handleMessage);
@@ -105,8 +128,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
+    console.log('[useAuth] Initialisation de l\'observateur d\'état Firebase (onAuthStateChanged)...');
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       const hasSupabaseSession = localStorage.getItem('supabase_user_session');
+      console.log('[useAuth] Changement d\'état Firebase détecté. Utilisateur actuel :', currentUser ? currentUser.email : 'aucun');
       if (currentUser) {
         localStorage.removeItem('supabase_user_session');
         setUser(currentUser);
@@ -115,7 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       setLoading(false);
     }, (err) => {
-      console.error('Erreur Auth:', err);
+      console.error('[useAuth] Erreur critique d\'authentification Firebase :', err);
       setError(err.message);
       setLoading(false);
     });

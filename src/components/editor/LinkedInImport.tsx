@@ -66,6 +66,10 @@ export const LinkedInImport: React.FC<LinkedInImportProps> = ({ isOpen, onClose 
       if (event.data && event.data.type === 'LINKEDIN_AUTH_SUCCESS') {
         const profile = event.data.profile;
         handleOAuthImportSuccess(profile);
+      } else if (event.data && event.data.type === 'LINKEDIN_AUTH_ERROR') {
+        console.error('[LinkedInImport] Reçu une notification d\'échec d\'authentification LinkedIn :', event.data.error);
+        setOauthError(event.data.error || "L'authentification LinkedIn a échoué.");
+        setIsOAuthLoading(false);
       }
     };
 

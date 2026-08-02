@@ -182,10 +182,66 @@ async function startServer() {
 
   // ---------------- LINKEDIN OAUTH ENDPOINTS ----------------
 
+  // Debug endpoint to help users diagnose LinkedIn configuration
+  app.get('/api/auth/linkedin/debug', (req, res) => {
+    const host = req.get('host') || '';
+    const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
+    const reqRedirectUri = `${protocol}://${host}/api/auth/linkedin/callback`;
+    const appUrlRedirectUri = process.env.APP_URL 
+      ? `${process.env.APP_URL.endsWith('/') ? process.env.APP_URL.slice(0, -1) : process.env.APP_URL}/api/auth/linkedin/callback`
+      : null;
+    const finalRedirectUri = getRedirectUri(req, '/api/auth/linkedin/callback');
+
+    const clientId = process.env.VITE_LINKEDIN_CLIENT_ID || process.env.LINKEDIN_CLIENT_ID;
+    const clientSecret = process.env.VITE_LINKEDIN_CLIENT_SECRET || process.env.LINKEDIN_CLIENT_SECRET;
+
+    const mask = (val: string | undefined) => {
+      if (!val) return 'Non défini / Vide';
+      if (val.length <= 8) return '*'.repeat(val.length);
+      return `${val.substring(0, 4)}...${val.substring(val.length - 4)} (longueur: ${val.length})`;
+    };
+
+    console.log("=== LINKEDIN AUTH DEBUG ===");
+    console.log("Host header:", host);
+    console.log("process.env.APP_URL:", process.env.APP_URL);
+    console.log("Generated Request-based Redirect URI:", reqRedirectUri);
+    console.log("Generated APP_URL-based Redirect URI:", appUrlRedirectUri);
+    console.log("Final chosen Redirect URI:", finalRedirectUri);
+    console.log("Client ID (masked):", mask(clientId));
+    console.log("Client Secret (masked):", mask(clientSecret));
+    console.log("===========================");
+
+    res.json({
+      environment: {
+        APP_URL: process.env.APP_URL || null,
+        hostHeader: host,
+      },
+      configuredKeys: {
+        LINKEDIN_CLIENT_ID_present: !!process.env.LINKEDIN_CLIENT_ID,
+        VITE_LINKEDIN_CLIENT_ID_present: !!process.env.VITE_LINKEDIN_CLIENT_ID,
+        LINKEDIN_CLIENT_SECRET_present: !!process.env.LINKEDIN_CLIENT_SECRET,
+        VITE_LINKEDIN_CLIENT_SECRET_present: !!process.env.VITE_LINKEDIN_CLIENT_SECRET,
+        clientIdMasked: mask(clientId),
+        clientSecretMasked: mask(clientSecret),
+      },
+      redirectUris: {
+        requestBased: reqRedirectUri,
+        appUrlBased: appUrlRedirectUri,
+        finalChosen: finalRedirectUri,
+      },
+      instructions: "Veuillez vous assurer que 'finalChosen' est EXACTEMENT répertorié dans la console développeur de LinkedIn (LinkedIn Developer Portal -> Auth -> Authorized redirect URLs for 3-legged OAuth). Dans l'environnement AI Studio, nous vous suggérons d'enregistrer ces deux URIs dans votre application LinkedIn :\n1. https://ais-dev-k64ughw3p2e2xjs24kdye5-707578475350.europe-west2.run.app/api/auth/linkedin/callback\n2. https://ais-pre-k64ughw3p2e2xjs24kdye5-707578475350.europe-west2.run.app/api/auth/linkedin/callback"
+    });
+  });
+
   // Endpoint to get LinkedIn authorization URL
   app.get('/api/auth/linkedin/url', (req, res) => {
     const redirectUri = getRedirectUri(req, '/api/auth/linkedin/callback');
     const clientId = process.env.VITE_LINKEDIN_CLIENT_ID || process.env.LINKEDIN_CLIENT_ID;
+
+    console.log("[LinkedIn Auth] url request:");
+    console.log(" - host:", req.get('host'));
+    console.log(" - redirectUri generated:", redirectUri);
+    console.log(" - clientId resolved:", clientId ? `${clientId.substring(0, 4)}...` : 'undefined');
 
     if (!clientId) {
       return res.status(400).json({
@@ -205,6 +261,14 @@ async function startServer() {
     const redirectUri = getRedirectUri(req, '/api/auth/linkedin/callback');
     const clientId = process.env.VITE_LINKEDIN_CLIENT_ID || process.env.LINKEDIN_CLIENT_ID;
     const clientSecret = process.env.VITE_LINKEDIN_CLIENT_SECRET || process.env.LINKEDIN_CLIENT_SECRET;
+
+    console.log("[LinkedIn Auth] callback received:");
+    console.log(" - query code present:", !!code);
+    console.log(" - query error:", error || 'none');
+    console.log(" - query error_description:", errorDescription || 'none');
+    console.log(" - redirectUri used for exchange:", redirectUri);
+    console.log(" - clientId resolved:", clientId ? `${clientId.substring(0, 4)}...` : 'undefined');
+    console.log(" - clientSecret resolved:", clientSecret ? `${clientSecret.substring(0, 4)}...` : 'undefined');
 
     if (error) {
       return res.send(`
@@ -226,6 +290,14 @@ async function startServer() {
               <p>${errorDescription || error}</p>
               <p>Veuillez fermer cette fenêtre et réessayer.</p>
             </div>
+            <script>
+              if (window.opener) {
+                window.opener.postMessage({ 
+                  type: 'LINKEDIN_AUTH_ERROR', 
+                  error: ${JSON.stringify(errorDescription || error)} 
+                }, window.location.origin);
+              }
+            </script>
           </body>
         </html>
       `);
@@ -327,9 +399,17 @@ async function startServer() {
             <div class="card">
               <h1>Erreur de Connexion</h1>
               <p>Une erreur est survenue lors de la connexion avec LinkedIn :</p>
-              <p><code>\${err.message || err}</code></p>
+              <p><code>${err.message || err}</code></p>
               <p>Veuillez fermer cette fenêtre et réessayer.</p>
             </div>
+            <script>
+              if (window.opener) {
+                window.opener.postMessage({ 
+                  type: 'LINKEDIN_AUTH_ERROR', 
+                  error: ${JSON.stringify(err.message || String(err))} 
+                }, window.location.origin);
+              }
+            </script>
           </body>
         </html>
       `);
