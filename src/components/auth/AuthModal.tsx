@@ -67,6 +67,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   // Clear inputs and error on modal open/close
   useEffect(() => {
     if (isOpen) {
+      setMode(initialMode);
       setLocalError(null);
       clearError();
       setTermsAccepted(false);
@@ -78,9 +79,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         formRef.current.reset();
       }
     }
-  }, [isOpen, clearError]);
-
-  if (!isOpen) return null;
+  }, [isOpen, initialMode, clearError]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -207,18 +206,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const activeError = localError || error;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto bg-zinc-950/50 backdrop-blur-md">
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 cursor-default" 
-        onClick={onClose}
-      />
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto bg-zinc-950/40 backdrop-blur-sm">
+          {/* Backdrop */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 cursor-default bg-zinc-950/40" 
+            onClick={onClose}
+          />
 
-      {/* Modal Container */}
-      <div 
-        onClick={(e) => e.stopPropagation()} 
-        className="relative w-full max-w-md bg-white rounded-2xl border border-zinc-200/80 shadow-2xl overflow-hidden z-10 my-8"
-      >
+          {/* Modal Container */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 15 }}
+            transition={{ type: "spring", duration: 0.35, bounce: 0.15 }}
+            onClick={(e) => e.stopPropagation()} 
+            className="relative w-full max-w-md bg-white rounded-2xl border border-zinc-200/80 shadow-2xl overflow-hidden z-10 my-8"
+          >
         
         {/* Decorative Top Accent */}
         <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600" />
@@ -526,8 +535,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </p>
           </div>
         </div>
-      </div>
-    </div>,
+      </motion.div>
+    </div>
+      )}
+    </AnimatePresence>,
     document.body
   );
 };
