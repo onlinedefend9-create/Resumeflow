@@ -209,7 +209,7 @@ export const useLinkedInImport = () => {
           ) : (
             <>
               <Linkedin className="w-3.5 h-3.5 fill-current" />
-              <span>{isFr ? 'Importer depuis LinkedIn' : 'Import from LinkedIn'}</span>
+              <span>{isFr ? 'Se connecter avec LinkedIn' : 'Sign in with LinkedIn'}</span>
             </>
           )}
         </button>
