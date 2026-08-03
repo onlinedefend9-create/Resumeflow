@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../hooks/useAuth';
 import { SEO } from '../components/SEO';
 import { 
   Mail, 
@@ -19,7 +20,8 @@ import {
   FileText,
   Clock,
   Download,
-  Users
+  Users,
+  ExternalLink
 } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import * as motionVal from 'motion/react';
@@ -29,6 +31,7 @@ const motion = motionVal.motion;
 export const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user: firebaseUser, loginWithGoogle } = useAuth();
   
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -39,20 +42,25 @@ export const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isIframe, setIsIframe] = useState(false);
 
   // Parse redirect path if any
   const from = (location.state as any)?.from?.pathname || '/';
+
+  useEffect(() => {
+    setIsIframe(window.self !== window.top);
+  }, []);
 
   // Check if already logged in
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
+      if (session?.user || firebaseUser) {
         navigate(from, { replace: true });
       }
     };
     checkUser();
-  }, [navigate, from]);
+  }, [navigate, from, firebaseUser]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,17 +169,15 @@ export const Login = () => {
     setLoading(true);
 
     try {
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin + '/',
-        }
-      });
-
-      if (oauthError) throw oauthError;
+      await loginWithGoogle();
+      setSuccessMessage("Connexion réussie ! Redirection...");
+      setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 1000);
     } catch (err: any) {
       console.error('Google Auth Error:', err);
       setError(err.message || 'Impossible de se connecter avec Google.');
+    } finally {
       setLoading(false);
     }
   };
@@ -334,6 +340,27 @@ export const Login = () => {
                     : "Accédez à votre espace de travail et gérez vos CV."}
                 </p>
               </div>
+
+              {/* Iframe warning banner */}
+              {isIframe && (
+                <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-850 space-y-3 mb-6 animate-fadeIn">
+                  <div className="flex items-start gap-2.5">
+                    <AlertCircle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
+                    <div className="font-semibold leading-relaxed text-amber-800">
+                      <strong className="font-extrabold text-amber-900 block mb-0.5">⚠️ Environnement d'aperçu d'éditeur</strong>
+                      Pour pouvoir vous connecter ou vous inscrire (E-mail, Google ou Supabase), vous devez ouvrir l'application dans un nouvel onglet. Les systèmes de sécurité des navigateurs modernes bloquent l'authentification au sein des cadres d'aperçu (iframe).
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => window.open(window.location.href, '_blank')}
+                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-sm transition-all cursor-pointer"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Ouvrir l'application dans un nouvel onglet</span>
+                  </button>
+                </div>
+              )}
 
               {/* Tab Selector */}
               <div className="flex bg-zinc-100/80 p-1 rounded-xl mb-6 border border-zinc-200/50">
