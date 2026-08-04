@@ -13,6 +13,53 @@ const ai = new GoogleGenAI({
   }
 });
 
+// Robust wrapper to handle temporary model unavailability (e.g. 503 high demand) with retries and fallback models
+async function generateContentWithRetryAndFallback(params: any) {
+  const modelsToTry = [
+    params.model, // Primary model requested
+    'gemini-flash-latest',
+    'gemini-3.1-flash-lite'
+  ].filter(Boolean);
+
+  let lastError: any = null;
+
+  for (const modelName of modelsToTry) {
+    let retries = 2; // Try up to 2 times for each model
+    while (retries > 0) {
+      try {
+        console.log(`[Gemini API] Envoi de la requête au modèle : ${modelName} (tentatives restantes pour ce modèle : ${retries})...`);
+        const response = await ai.models.generateContent({
+          ...params,
+          model: modelName,
+        });
+        return response;
+      } catch (err: any) {
+        lastError = err;
+        console.error(`[Gemini API] Échec de la tentative avec le modèle ${modelName} :`, err.message || err);
+        
+        // Check for common temporary error indicators (503, unavailable, high demand, overloaded)
+        const errStr = (JSON.stringify(err).toLowerCase() + ' ' + String(err.message || '').toLowerCase());
+        const isTemporary = errStr.includes('503') || errStr.includes('unavailable') || errStr.includes('high demand') || errStr.includes('overloaded');
+        
+        if (isTemporary) {
+          retries--;
+          if (retries > 0) {
+            console.log(`[Gemini API] Erreur temporaire détectée. Attente de 1 seconde avant nouvel essai...`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue; // Retry with the same model
+          }
+        } else {
+          // If it's a structural syntax/schema error, throw it immediately
+          throw err;
+        }
+      }
+    }
+    console.log(`[Gemini API] Passage au modèle de secours suivant...`);
+  }
+
+  throw lastError || new Error("Tous les modèles Gemini ont échoué.");
+}
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -443,14 +490,14 @@ async function startServer() {
     }
 
     try {
-      const response = await ai.models.generateContent({
+      const response = await generateContentWithRetryAndFallback({
         model: 'gemini-3.6-flash',
         contents: [
-          `Voici les informations brutes extraites d'un profil ou CV (en texte libre) :\n\n\${text}\n\nAnalyse attentivement ce texte et structure-le de façon optimale au format JSON pour remplir un CV professionnel.`
+          `Voici les informations brutes extraites d'un profil ou CV (en texte libre) :\n\n${text}\n\nAnalyse attentivement ce texte et structure-le de façon optimale au format JSON pour remplir un CV professionnel.`
         ],
         config: {
           systemInstruction: `Tu es un expert en recrutement et en rédaction de CV. Ton rôle est de parser des données textuelles provenant d'un profil LinkedIn ou d'un export PDF LinkedIn, et d'en extraire les informations de manière structurée pour générer un CV de haute qualité.
-Langue demandée pour le CV structuré : \${language === 'fr' ? 'Français' : language === 'de' ? 'Allemand' : language === 'es' ? 'Espagnol' : 'Anglais'}. Si le texte d'origine est dans une autre langue, traduis de manière professionnelle les intitulés, résumés et descriptions pour correspondre à cette langue cible de manière naturelle.
+Langue demandée pour le CV structuré : ${language === 'fr' ? 'Français' : language === 'de' ? 'Allemand' : language === 'es' ? 'Espagnol' : 'Anglais'}. Si le texte d'origine est dans une autre langue, traduis de manière professionnelle les intitulés, résumés et descriptions pour correspondre à cette langue cible de manière naturelle.
 
 Règles de structuration des sections :
 1. Header :
@@ -535,7 +582,7 @@ Règles de structuration des sections :
     }
 
     try {
-      const response = await ai.models.generateContent({
+      const response = await generateContentWithRetryAndFallback({
         model: 'gemini-3.6-flash',
         contents: [
           `Voici le contenu du CV structuré au format JSON :\n\n${JSON.stringify(cvData, null, 2)}\n\nAnalyse ce CV par rapport aux exigences des systèmes ATS modernes (Applicant Tracking Systems) et fournis un rapport détaillé en français au format JSON.`
