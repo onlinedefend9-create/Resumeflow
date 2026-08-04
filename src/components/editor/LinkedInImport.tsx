@@ -149,7 +149,11 @@ export const LinkedInImport: React.FC<LinkedInImportProps> = ({ isOpen, onClose 
       }
     } catch (err: any) {
       console.error(err);
-      setOauthError(err.message || "Une erreur est survenue lors de l'authentification.");
+      let errMsg = err.message || "Une erreur est survenue lors de l'authentification.";
+      if (errMsg === 'Failed to fetch' || errMsg.includes('fetch')) {
+        errMsg = "Impossible de se connecter au serveur d'authentification (Erreur réseau). Veuillez ouvrir l'application dans un nouvel onglet.";
+      }
+      setOauthError(errMsg);
       setIsOAuthLoading(false);
     }
   };
@@ -265,7 +269,11 @@ export const LinkedInImport: React.FC<LinkedInImportProps> = ({ isOpen, onClose 
 
     } catch (err: any) {
       console.error(err);
-      setParseError(err.message || "Une erreur est survenue pendant l'extraction des données.");
+      let errMsg = err.message || "Une erreur est survenue pendant l'extraction des données.";
+      if (errMsg === 'Failed to fetch' || errMsg.includes('fetch')) {
+        errMsg = "Impossible de se connecter au serveur d'extraction (Erreur réseau). Veuillez rafraîchir la page ou ouvrir l'application dans un nouvel onglet.";
+      }
+      setParseError(errMsg);
     } finally {
       setIsParsing(false);
     }

@@ -185,7 +185,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setLocalError("Le bloqueur de fenêtres pop-up a empêché l'ouverture. Veuillez autoriser les fenêtres pop-up pour ce site.");
       }
     } catch (err: any) {
-      setLocalError(err.message || "Erreur lors de la tentative de connexion avec Supabase.");
+      let errMsg = err.message || "Erreur lors de la tentative de connexion avec Supabase.";
+      if (errMsg === 'Failed to fetch' || errMsg.includes('fetch')) {
+        errMsg = "Impossible de se connecter au serveur d'authentification (Erreur réseau). Veuillez ouvrir l'application dans un nouvel onglet.";
+      }
+      setLocalError(errMsg);
     }
   };
 

@@ -186,7 +186,11 @@ export const useLinkedInImport = () => {
       }
     } catch (err: any) {
       console.error('[useLinkedInImport] Erreur lors du lancement d\'OAuth :', err);
-      setOauthError(err.message || "Une erreur est survenue lors de l'authentification.");
+      let errMsg = err.message || "Une erreur est survenue lors de l'authentification.";
+      if (errMsg === 'Failed to fetch' || errMsg.includes('fetch')) {
+        errMsg = "Impossible de se connecter au serveur d'authentification (Erreur réseau). Veuillez ouvrir l'application dans un nouvel onglet.";
+      }
+      setOauthError(errMsg);
       setIsOAuthLoading(false);
     }
   };

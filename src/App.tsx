@@ -17,6 +17,7 @@ import { BlogPostDetail } from './pages/BlogPostDetail';
 import { SitemapPage } from './pages/SitemapPage';
 import { Privacy } from './pages/Privacy';
 import { Login } from './pages/Login';
+import { AuthCallback } from './pages/AuthCallback';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 
@@ -40,6 +41,7 @@ export default function App() {
                     <Route path="/sitemap" element={<SitemapPage />} />
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/login" element={<Login />} />
+                    <Route path="/auth/callback" element={<AuthCallback />} />
                   </Routes>
                 </main>
                 <Footer />

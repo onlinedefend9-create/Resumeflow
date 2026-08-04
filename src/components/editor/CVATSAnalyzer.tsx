@@ -61,7 +61,11 @@ export const CVATSAnalyzer: React.FC = () => {
       setResult(analysisData);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Impossible d'analyser le CV. Veuillez réessayer.");
+      let errMsg = err.message || "Impossible d'analyser le CV. Veuillez réessayer.";
+      if (errMsg === 'Failed to fetch' || errMsg.includes('fetch')) {
+        errMsg = "Impossible de se connecter au service d'analyse (Erreur réseau). Veuillez rafraîchir la page ou ouvrir l'application dans un nouvel onglet.";
+      }
+      setError(errMsg);
     } finally {
       setLoading(false);
     }
