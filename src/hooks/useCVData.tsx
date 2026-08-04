@@ -19,6 +19,7 @@ export interface CVContextType {
   editorTheme: 'light' | 'dark';
   setEditorTheme: (theme: 'light' | 'dark') => void;
   autoSaveTime: string | null;
+  isQuotaExceeded: boolean;
 }
 
 const CVContext = createContext<CVContextType | undefined>(undefined);
@@ -321,6 +322,7 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isCloudSynced, setIsCloudSynced] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [autoSaveTime, setAutoSaveTime] = useState<string | null>(null);
+  const [isQuotaExceeded, setIsQuotaExceeded] = useState(false);
 
   const [editorTheme, setEditorThemeState] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('cv_editor_theme') as 'light' | 'dark') || 'light';
@@ -465,8 +467,12 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
 
         setIsCloudSynced(true);
-      } catch (err) {
+        setIsQuotaExceeded(false);
+      } catch (err: any) {
         console.error('Error syncing with Firestore:', err);
+        if (err?.code === 'resource-exhausted' || String(err).includes('quota') || String(err).includes('exhausted')) {
+          setIsQuotaExceeded(true);
+        }
       } finally {
         if (active) {
           setIsSyncing(false);
@@ -533,9 +539,13 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             const dataDocRef = doc(db, 'users', user.uid, 'cv', 'data');
             await setDoc(dataDocRef, data);
             setIsCloudSynced(true);
-          } catch (err) {
+            setIsQuotaExceeded(false);
+          } catch (err: any) {
             console.error('Failed to save CV data to Firestore:', err);
             setIsCloudSynced(false);
+            if (err?.code === 'resource-exhausted' || String(err).includes('quota') || String(err).includes('exhausted')) {
+              setIsQuotaExceeded(true);
+            }
           }
         }
 
@@ -600,8 +610,16 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           if (user) {
             const dataDocRef = doc(db, 'users', user.uid, 'cv', 'data');
             setDoc(dataDocRef, data)
-              .then(() => setIsCloudSynced(true))
-              .catch(err => console.warn('Periodic sync to Firestore failed:', err));
+              .then(() => {
+                setIsCloudSynced(true);
+                setIsQuotaExceeded(false);
+              })
+              .catch(err => {
+                console.warn('Periodic sync to Firestore failed:', err);
+                if (err?.code === 'resource-exhausted' || String(err).includes('quota') || String(err).includes('exhausted')) {
+                  setIsQuotaExceeded(true);
+                }
+              });
           }
         }
       } catch (err) {
@@ -616,9 +634,16 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     if (user) {
       const exportsDocRef = doc(db, 'users', user.uid, 'cv', 'exports');
-      setDoc(exportsDocRef, { items: exports }).catch(err => {
-        console.error('Failed to save exports history to Firestore:', err);
-      });
+      setDoc(exportsDocRef, { items: exports })
+        .then(() => {
+          setIsQuotaExceeded(false);
+        })
+        .catch(err => {
+          console.error('Failed to save exports history to Firestore:', err);
+          if (err?.code === 'resource-exhausted' || String(err).includes('quota') || String(err).includes('exhausted')) {
+            setIsQuotaExceeded(true);
+          }
+        });
     }
   }, [exports, user]);
 
@@ -704,7 +729,7 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   return (
-    <CVContext.Provider value={{ data, setData, loadLanguagePreset, updateTheme, exports, addExport, deleteExport, isCloudSynced, isSyncing, editorTheme, setEditorTheme, autoSaveTime }}>
+    <CVContext.Provider value={{ data, setData, loadLanguagePreset, updateTheme, exports, addExport, deleteExport, isCloudSynced, isSyncing, editorTheme, setEditorTheme, autoSaveTime, isQuotaExceeded }}>
       {children}
     </CVContext.Provider>
   );

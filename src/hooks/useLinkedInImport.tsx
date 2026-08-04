@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Linkedin, Sparkles, Loader2, AlertCircle, Check } from 'lucide-react';
+import { Linkedin, Sparkles, Loader2, AlertCircle, Check, ExternalLink } from 'lucide-react';
 import { useCVData } from './useCVData';
 import { useLanguage } from '../i18n/LanguageContext';
 
@@ -155,6 +155,12 @@ export const useLinkedInImport = () => {
     setOauthError(null);
     setImportSuccess(false);
 
+    if (window.self !== window.top) {
+      setOauthError("Veuillez ouvrir l'application dans un nouvel onglet pour vous connecter avec LinkedIn.");
+      setIsOAuthLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/auth/linkedin/url');
       if (!response.ok) {
@@ -192,27 +198,49 @@ export const useLinkedInImport = () => {
   // Composant bouton haut de gamme 'Importer depuis LinkedIn' réutilisable
   const LinkedInImportButton: React.FC<LinkedInImportButtonProps> = ({ className = "" }) => {
     const isFr = language === 'fr';
+    const [isInIframe, setIsInIframe] = useState(false);
+
+    useEffect(() => {
+      setIsInIframe(window.self !== window.top);
+    }, []);
     
     return (
-      <div className="space-y-2 w-full">
-        <button
-          type="button"
-          onClick={handleLinkedInLogin}
-          disabled={isOAuthLoading}
-          className={`w-full py-2 px-3 bg-[#0077b5] hover:bg-[#006297] disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-extrabold rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer ${className}`}
-        >
-          {isOAuthLoading ? (
-            <>
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              <span>{isFr ? 'Connexion...' : 'Connecting...'}</span>
-            </>
-          ) : (
-            <>
-              <Linkedin className="w-3.5 h-3.5 fill-current" />
-              <span>{isFr ? 'Se connecter avec LinkedIn' : 'Sign in with LinkedIn'}</span>
-            </>
-          )}
-        </button>
+      <div className="space-y-2.5 w-full">
+        {isInIframe ? (
+          <div className="p-3 bg-amber-950/40 border border-amber-900/30 rounded-xl space-y-2.5 animate-fadeIn">
+            <div className="flex items-start gap-2 text-amber-300 text-[11px] leading-relaxed font-semibold">
+              <AlertCircle className="w-4 h-4 shrink-0 text-amber-500" />
+              <span>Pour vous connecter avec LinkedIn, ouvrez l'application dans un nouvel onglet (sécurité iframe).</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => window.open(window.location.href, '_blank')}
+              className="w-full py-1.5 px-3 bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-lg text-[10px] flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>Ouvrir dans un nouvel onglet</span>
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={handleLinkedInLogin}
+            disabled={isOAuthLoading}
+            className={`w-full py-2 px-3 bg-[#0077b5] hover:bg-[#006297] disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-extrabold rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer ${className}`}
+          >
+            {isOAuthLoading ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>{isFr ? 'Connexion...' : 'Connecting...'}</span>
+              </>
+            ) : (
+              <>
+                <Linkedin className="w-3.5 h-3.5 fill-current" />
+                <span>{isFr ? 'Se connecter avec LinkedIn' : 'Sign in with LinkedIn'}</span>
+              </>
+            )}
+          </button>
+        )}
 
         {importSuccess && (
           <div className="p-2 bg-emerald-950/40 border border-emerald-900/40 rounded-lg flex items-center gap-2 text-emerald-400 text-[10px] animate-fadeIn">

@@ -1,4 +1,4 @@
-import { Download, Check, Share2, Printer, X, Sparkles, Eye, FileCheck, Cloud, Loader2, Sun, Moon } from 'lucide-react';
+import { Download, Check, Share2, Printer, X, Sparkles, Eye, FileCheck, Cloud, Loader2, Sun, Moon, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { LanguageSelector } from '../LanguageSelector';
@@ -19,7 +19,7 @@ export const Toolbar = ({}: ToolbarProps) => {
   const [showModal, setShowModal] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const { t, language } = useLanguage();
-  const { data, isCloudSynced, isSyncing, editorTheme, setEditorTheme, autoSaveTime } = useCVData();
+  const { data, isCloudSynced, isSyncing, editorTheme, setEditorTheme, autoSaveTime, isQuotaExceeded } = useCVData();
   const { user } = useAuth();
 
   const getLocalSaveStatusText = () => {
@@ -91,23 +91,52 @@ export const Toolbar = ({}: ToolbarProps) => {
         
         {/* Sync Status Badge */}
         {user ? (
-          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold select-none animate-fadeIn ${
-            editorTheme === 'dark'
-              ? 'bg-emerald-950/40 border border-emerald-900/50 text-emerald-400'
-              : 'bg-emerald-50 border border-emerald-100/60 text-emerald-700'
-          }`}>
-            {isSyncing ? (
-              <Loader2 className="w-3 h-3 text-emerald-400 animate-spin" />
-            ) : (
-              <Cloud className="w-3.5 h-3.5 text-emerald-400 fill-emerald-950/20" />
-            )}
-            <span className="hidden sm:inline">
-              {getCloudSaveStatusText()}
-            </span>
-            <span className="sm:hidden">
-              {getMobileCloudStatusText()}
-            </span>
-          </div>
+          isQuotaExceeded ? (
+            <div 
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold select-none animate-fadeIn ${
+                editorTheme === 'dark'
+                  ? 'bg-amber-950/40 border border-amber-900/50 text-amber-400'
+                  : 'bg-amber-50 border border-amber-100/60 text-amber-700'
+              }`}
+              title={
+                language === 'fr' 
+                  ? "Le quota gratuit du serveur Cloud est temporairement atteint. Vos modifications sont sauvegardées en toute sécurité sur votre appareil."
+                  : "Cloud server free quota is temporarily reached. Your changes are safely saved locally on your device."
+              }
+            >
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span className="hidden sm:inline">
+                {language === 'fr' ? 'Quota Cloud Atteint (Sauvegarde locale active)' : 
+                 language === 'es' ? 'Cuota de Cloud Alcanzada (Local Activo)' :
+                 language === 'de' ? 'Cloud-Limit erreicht (Lokal aktiv)' :
+                 'Cloud Quota Reached (Saved locally)'}
+              </span>
+              <span className="sm:hidden">
+                {language === 'fr' ? 'Quota Cloud' : 
+                 language === 'es' ? 'Límite Cloud' :
+                 language === 'de' ? 'Cloud-Limit' :
+                 'Quota Reached'}
+              </span>
+            </div>
+          ) : (
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold select-none animate-fadeIn ${
+              editorTheme === 'dark'
+                ? 'bg-emerald-950/40 border border-emerald-900/50 text-emerald-400'
+                : 'bg-emerald-50 border border-emerald-100/60 text-emerald-700'
+            }`}>
+              {isSyncing ? (
+                <Loader2 className="w-3 h-3 text-emerald-400 animate-spin" />
+              ) : (
+                <Cloud className="w-3.5 h-3.5 text-emerald-400 fill-emerald-950/20" />
+              )}
+              <span className="hidden sm:inline">
+                {getCloudSaveStatusText()}
+              </span>
+              <span className="sm:hidden">
+                {getMobileCloudStatusText()}
+              </span>
+            </div>
+          )
         ) : (
           <div className="flex items-center gap-2">
             {/* Local Save Status */}
