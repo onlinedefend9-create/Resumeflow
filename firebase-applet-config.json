@@ -1,12 +1,9 @@
 {
-  "projectId": "ungoogly-team-mdw77",
-  "appId": "1:127951030758:web:5c2cf897982d136cd8ae27",
-  "apiKey": "AIzaSyBnUv2JD67Y8mQ7jArvNbxU9M9CkPzNbUM",
-  "authDomain": "ungoogly-team-mdw77.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-cvcraft-ce4879bc-7d0b-4a47-b102-c553fae73cae",
-  "storageBucket": "ungoogly-team-mdw77.firebasestorage.app",
-  "messagingSenderId": "127951030758",
-  "measurementId": "",
-  "oAuthClientId": "127951030758-bej659bid87qturt2hfq0mc0ivlhvj5q.apps.googleusercontent.com",
-  "recaptchaSiteKey": ""
+  "apiKey": "AIzaSyA6mKmuxEYN6WIQgRVBxNRLLaKB5szyRJo",
+  "projectId": "resumeflow-1d96e",
+  "messagingSenderId": "1089976095735",
+  "appId": "1:1089976095735:web:d424273e61ac5ea1e754f2",
+  "authDomain": "resumeflow-1d96e.firebaseapp.com",
+  "measurementId": "G-N0GD872K16",
+  "storageBucket": "resumeflow-1d96e.firebasestorage.app"
 }
