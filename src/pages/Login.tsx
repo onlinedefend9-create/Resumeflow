@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import * as motionVal from 'motion/react';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 
 const motion = motionVal.motion;
 
@@ -167,13 +168,9 @@ export const Login = () => {
     setError(null);
     setSuccessMessage(null);
     setLoading(true);
-
     try {
+      console.log('[Google Auth] Initialisation via Firebase...');
       await loginWithGoogle();
-      setSuccessMessage("Connexion réussie ! Redirection...");
-      setTimeout(() => {
-        navigate(from, { replace: true });
-      }, 1000);
     } catch (err: any) {
       console.error('Google Auth Error:', err);
       setError(err.message || 'Impossible de se connecter avec Google.');
@@ -188,12 +185,36 @@ export const Login = () => {
     setLoading(true);
 
     try {
-      // ❌ Remplacé 'linkedin' (v2 dépréciée) par 'linkedin_oidc' conformément aux exigences de sécurité LinkedIn et Supabase
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'linkedin_oidc',
-        options: { redirectTo: `${window.location.origin}/auth/callback` }
-      });
-      if (error) throw error;
+      console.log('[LinkedIn Auth] Récupération de l\'URL d\'autorisation...');
+      const response = await fetch('/api/auth/linkedin/url');
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Impossible de récupérer l'URL de connexion LinkedIn.");
+      }
+      const { url } = await response.json();
+      
+      if (url) {
+        console.log('[LinkedIn Auth] Ouverture du popup LinkedIn:', url);
+        const popup = window.open(
+          url,
+          'linkedin_oauth_popup',
+          'width=600,height=700,status=no,resizable=yes,scrollbars=yes'
+        );
+        
+        if (!popup) {
+          throw new Error("Le pop-up de connexion LinkedIn a été bloqué par votre navigateur. Veuillez autoriser les pop-ups pour ce site.");
+        }
+        
+        // Monitor closure to reset loading state as backup
+        const timer = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(timer);
+            setLoading(false);
+          }
+        }, 1000);
+      } else {
+        throw new Error("Aucune URL d'authentification LinkedIn reçue du serveur.");
+      }
     } catch (err: any) {
       console.error('LinkedIn OAuth Error:', err);
       setError(err.message || 'Impossible de se connecter avec LinkedIn.');
@@ -529,7 +550,7 @@ export const Login = () => {
                   className="w-full py-3.5 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer shadow-md disabled:opacity-50 disabled:pointer-events-none mt-2"
                 >
                   {loading ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <LoadingSpinner size="sm" color="text-white" />
                   ) : (
                     <>
                       <span>{isSignUp ? "Sauvegarder et Continuer" : "Se connecter et Continuer"}</span>

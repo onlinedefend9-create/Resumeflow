@@ -100,6 +100,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('supabase_user_session', JSON.stringify(supabaseUser));
       } else if (msgData.type === 'LINKEDIN_AUTH_SUCCESS') {
         console.log('[useAuth] Succès Authentification LinkedIn détecté ! Profil :', msgData.profile);
+        const profile = msgData.profile;
+        const linkedinUser = {
+          uid: 'linkedin_' + (profile.sub || profile.id),
+          email: profile.email,
+          displayName: profile.name || `${profile.given_name || ''} ${profile.family_name || ''}`.trim() || profile.email?.split('@')[0] || 'Utilisateur LinkedIn',
+          photoURL: profile.picture || null
+        };
+        setUser(linkedinUser);
+        localStorage.setItem('supabase_user_session', JSON.stringify(linkedinUser));
+        window.dispatchEvent(new Event('supabase-auth-change'));
       } else if (msgData.type === 'LINKEDIN_AUTH_ERROR') {
         console.error('[useAuth] Échec Authentification LinkedIn détecté ! Erreur :', msgData.error);
         setError(msgData.error || 'L\'authentification avec LinkedIn a échoué.');
@@ -161,8 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       setLoading(false);
     }, (err) => {
-      console.error('[useAuth] Erreur critique d\'authentification Firebase :', err);
-      setError(err.message);
+      console.warn('[useAuth] Erreur d\'authentification Firebase (non fatale car Supabase/Local est disponible) :', err);
       setLoading(false);
     });
 

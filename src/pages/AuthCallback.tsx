@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 
 export const AuthCallback = () => {
   const navigate = useNavigate();
@@ -11,6 +12,18 @@ export const AuthCallback = () => {
     const handleCallback = async () => {
       try {
         console.log('[AuthCallback] Récupération de la session suite au redirect OAuth...');
+        
+        // Capturer le code d'authentification s'il est présent dans l'URL (flux PKCE)
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        
+        if (code) {
+          console.log('[AuthCallback] Code d\'autorisation détecté dans l\'URL, échange contre une session...');
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (exchangeError) throw exchangeError;
+          console.log('[AuthCallback] Échange de code réussi !');
+        }
+        
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) throw error;
         
@@ -29,6 +42,17 @@ export const AuthCallback = () => {
           window.dispatchEvent(new Event('storage'));
           window.dispatchEvent(new Event('supabase-auth-change'));
           
+          if (window.opener) {
+            console.log('[AuthCallback] Opener détecté, envoi de OAUTH_AUTH_SUCCESS et fermeture...');
+            window.opener.postMessage({ 
+              type: 'OAUTH_AUTH_SUCCESS', 
+              provider: 'supabase',
+              user: userPayload
+            }, '*');
+            window.close();
+            return;
+          }
+          
           console.log('[AuthCallback] Session sauvegardée localement. Redirection vers la page principale...');
           navigate('/', { replace: true });
         } else {
@@ -44,8 +68,21 @@ export const AuthCallback = () => {
               isSupabase: true
             };
             localStorage.setItem('supabase_user_session', JSON.stringify(userPayload));
+            
             window.dispatchEvent(new Event('storage'));
             window.dispatchEvent(new Event('supabase-auth-change'));
+            
+            if (window.opener) {
+              console.log('[AuthCallback] Opener détecté, envoi de OAUTH_AUTH_SUCCESS et fermeture...');
+              window.opener.postMessage({ 
+                type: 'OAUTH_AUTH_SUCCESS', 
+                provider: 'supabase',
+                user: userPayload
+              }, '*');
+              window.close();
+              return;
+            }
+            
             navigate('/', { replace: true });
           } else {
             // S'il n'y a pas d'erreur mais pas d'utilisateur, on redirige vers le login
@@ -77,9 +114,12 @@ export const AuthCallback = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-            <h1 className="text-lg font-bold text-zinc-800">Finalisation de l'authentification</h1>
-            <p className="text-sm text-zinc-500">Nous terminons l'échange sécurisé de vos informations de profil...</p>
+            <h1 className="text-lg font-bold text-zinc-800 mb-2">Finalisation de l'authentification</h1>
+            <LoadingSpinner
+              size="lg"
+              color="text-blue-600"
+              message="Nous terminons l'échange sécurisé de vos informations de profil..."
+            />
           </div>
         )}
       </div>

@@ -1,17 +1,31 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 
-// Initialize Gemini client with standard telemetry headers
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
+// Lazy initialization of the Gemini client to avoid crashes if API key is missing on startup
+let aiClient: GoogleGenAI | null = null;
+
+function getGeminiClient(): GoogleGenAI {
+  if (!aiClient) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is missing. Please configure it in your Settings.");
     }
+    aiClient = new GoogleGenAI({
+      apiKey: apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        }
+      }
+    });
   }
-});
+  return aiClient;
+}
 
 // Robust wrapper to handle temporary model unavailability (e.g. 503 high demand) with retries and fallback models
 async function generateContentWithRetryAndFallback(params: any) {
@@ -28,6 +42,7 @@ async function generateContentWithRetryAndFallback(params: any) {
     while (retries > 0) {
       try {
         console.log(`[Gemini API] Envoi de la requête au modèle : ${modelName} (tentatives restantes pour ce modèle : ${retries})...`);
+        const ai = getGeminiClient();
         const response = await ai.models.generateContent({
           ...params,
           model: modelName,
@@ -298,7 +313,24 @@ async function startServer() {
     });
   });
 
-  // Endpoint to get LinkedIn authorization URL
+  // Route to directly redirect the user to LinkedIn OAuth page
+  app.get('/api/auth/linkedin', (req, res) => {
+    const redirectUri = getRedirectUri(req, '/api/auth/linkedin/callback');
+    const clientId = process.env.VITE_LINKEDIN_CLIENT_ID || process.env.LINKEDIN_CLIENT_ID;
+
+    console.log("[LinkedIn Auth] redirecting to LinkedIn OAuth...");
+    console.log(" - redirectUri generated:", redirectUri);
+    console.log(" - clientId resolved:", clientId ? `${clientId.substring(0, 4)}...` : 'undefined');
+
+    if (!clientId) {
+      return res.status(400).send("Client ID LinkedIn non configuré. Veuillez définir LINKEDIN_CLIENT_ID dans vos variables d'environnement.");
+    }
+
+    const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=openid%20profile%20email&state=linkedin_auth`;
+    res.redirect(authUrl);
+  });
+
+  // Endpoint to get LinkedIn authorization URL (for popup flows)
   app.get('/api/auth/linkedin/url', (req, res) => {
     const redirectUri = getRedirectUri(req, '/api/auth/linkedin/callback');
     const clientId = process.env.VITE_LINKEDIN_CLIENT_ID || process.env.LINKEDIN_CLIENT_ID;
@@ -436,10 +468,15 @@ async function startServer() {
               const profile = ${JSON.stringify(profileData)};
               if (window.opener) {
                 window.opener.postMessage({ type: 'LINKEDIN_AUTH_SUCCESS', profile: profile }, window.location.origin);
+                setTimeout(() => {
+                  window.close();
+                }, 1500);
+              } else {
+                try {
+                  localStorage.setItem('linkedin_profile', JSON.stringify(profile));
+                } catch (e) {}
+                window.location.href = '/cv-generator?linkedin_import=success';
               }
-              setTimeout(() => {
-                window.close();
-              }, 1500);
             </script>
           </body>
         </html>

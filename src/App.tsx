@@ -20,6 +20,7 @@ import { Login } from './pages/Login';
 import { AuthCallback } from './pages/AuthCallback';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 export default function App() {
   return (
@@ -33,7 +34,14 @@ export default function App() {
                 <main className="flex-1">
                   <Routes>
                     <Route path="/" element={<Home />} />
-                    <Route path="/cv-generator" element={<Editor />} />
+                    <Route 
+                      path="/cv-generator" 
+                      element={
+                        <ProtectedRoute>
+                          <Editor />
+                        </ProtectedRoute>
+                      } 
+                    />
                     <Route path="/cv-templates" element={<Templates />} />
                     <Route path="/pricing" element={<Pricing />} />
                     <Route path="/blog" element={<Blog />} />
