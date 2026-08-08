@@ -469,7 +469,7 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setIsCloudSynced(true);
         setIsQuotaExceeded(false);
       } catch (err: any) {
-        console.error('Error syncing with Firestore:', err);
+        console.warn('Error syncing with Firestore (operating in local/fallback mode):', err);
         if (err?.code === 'resource-exhausted' || String(err).includes('quota') || String(err).includes('exhausted')) {
           setIsQuotaExceeded(true);
         }
@@ -541,7 +541,7 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             setIsCloudSynced(true);
             setIsQuotaExceeded(false);
           } catch (err: any) {
-            console.error('Failed to save CV data to Firestore:', err);
+            console.warn('Failed to save CV data to Firestore (operating in local fallback):', err);
             setIsCloudSynced(false);
             if (err?.code === 'resource-exhausted' || String(err).includes('quota') || String(err).includes('exhausted')) {
               setIsQuotaExceeded(true);
@@ -623,7 +623,7 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           }
         }
       } catch (err) {
-        console.error('Periodic background auto-save failed:', err);
+        console.warn('Periodic background auto-save failed:', err);
       }
     }, 15000);
 
@@ -639,7 +639,7 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           setIsQuotaExceeded(false);
         })
         .catch(err => {
-          console.error('Failed to save exports history to Firestore:', err);
+          console.warn('Failed to save exports history to Firestore:', err);
           if (err?.code === 'resource-exhausted' || String(err).includes('quota') || String(err).includes('exhausted')) {
             setIsQuotaExceeded(true);
           }

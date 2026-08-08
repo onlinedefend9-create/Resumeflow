@@ -302,7 +302,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
     } catch (err: any) {
-      console.error('Erreur Firebase Google Auth:', err);
+      const isIframe = typeof window !== 'undefined' && (window.self !== window.top || window.location.search.includes('iframe=true'));
+      const isExpectedSandboxError = isIframe || err?.code === 'auth/network-request-failed' || err?.code === 'auth/popup-blocked';
+      
+      if (isExpectedSandboxError) {
+        console.warn('Google Auth note (sandbox/iframe/network constraint):', err);
+      } else {
+        console.error('Erreur Firebase Google Auth:', err);
+      }
       
       const host = window.location.hostname;
       const isProd = host !== 'localhost' && !host.includes('127.0.0.1') && !host.includes('ais-dev-') && !host.includes('ais-pre-');
@@ -335,9 +342,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         errMsg = `Erreur de connexion : ${err.message}`;
       }
 
-      // Check if we are inside an iframe or if it's a typical iframe block (network-request-failed / popup-blocked)
-      const isIframe = typeof window !== 'undefined' && (window.self !== window.top || window.location.search.includes('iframe=true'));
-      if (isIframe || err.code === 'auth/network-request-failed' || err.code === 'auth/popup-blocked') {
+      if (isExpectedSandboxError) {
         console.warn('Google Auth failed/blocked in sandbox environment. Activating Local Guest Session fallback.');
         const fallbackUser = {
           uid: 'local_google_guest',

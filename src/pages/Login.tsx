@@ -187,7 +187,14 @@ export const Login = () => {
       console.log('[Google Auth] Initialisation via Firebase...');
       await loginWithGoogle();
     } catch (err: any) {
-      console.error('Google Auth Error:', err);
+      const isIframe = typeof window !== 'undefined' && (window.self !== window.top || window.location.search.includes('iframe=true'));
+      const isExpectedSandboxError = isIframe || err?.code === 'auth/network-request-failed' || err?.code === 'auth/popup-blocked' || String(err).includes('network-request-failed');
+      
+      if (isExpectedSandboxError) {
+        console.warn('Google Auth note (sandbox/iframe/network constraint):', err);
+      } else {
+        console.error('Google Auth Error:', err);
+      }
       setError(err.message || 'Impossible de se connecter avec Google.');
     } finally {
       setLoading(false);

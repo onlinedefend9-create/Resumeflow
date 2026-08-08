@@ -147,7 +147,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       await loginWithGoogle();
       onClose();
     } catch (err: any) {
-      console.error("Erreur de connexion avec Google:", err);
+      const isIframe = typeof window !== 'undefined' && (window.self !== window.top || window.location.search.includes('iframe=true'));
+      const isExpectedSandboxError = isIframe || err?.code === 'auth/network-request-failed' || err?.code === 'auth/popup-blocked' || String(err).includes('network-request-failed');
+      
+      if (isExpectedSandboxError) {
+        console.warn('Google Auth note (sandbox/iframe/network constraint):', err);
+      } else {
+        console.error("Erreur de connexion avec Google:", err);
+      }
       // Erreur gérée par le hook useAuth
     } finally {
       setLoadingProvider(null);
