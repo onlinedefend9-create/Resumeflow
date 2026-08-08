@@ -46,7 +46,9 @@ export const Login = () => {
   const [isIframe, setIsIframe] = useState(false);
 
   // Parse redirect path if any
-  const from = (location.state as any)?.from?.pathname || '/';
+  const from = (location.state as any)?.from 
+    ? ((location.state as any).from.pathname + ((location.state as any).from.search || ''))
+    : '/';
 
   useEffect(() => {
     setIsIframe(window.self !== window.top);
@@ -57,6 +59,19 @@ export const Login = () => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user || firebaseUser) {
+        // Sync to localStorage if Supabase session is active but local state is missing
+        if (session?.user && !localStorage.getItem('supabase_user_session')) {
+          const userPayload = {
+            uid: session.user.id,
+            email: session.user.email,
+            displayName: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
+            photoURL: session.user.user_metadata?.avatar_url || null,
+            isSupabase: true
+          };
+          localStorage.setItem('supabase_user_session', JSON.stringify(userPayload));
+          window.dispatchEvent(new Event('storage'));
+          window.dispatchEvent(new Event('supabase-auth-change'));
+        }
         navigate(from, { replace: true });
       }
     };

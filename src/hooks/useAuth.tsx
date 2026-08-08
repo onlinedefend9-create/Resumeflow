@@ -329,9 +329,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         errMsg = `Ce domaine (${window.location.hostname}) n'est pas encore autorisé dans votre console Firebase. Veuillez vous rendre sur la console Firebase > Authentication > Paramètres > Domaines autorisés, et ajoutez ce domaine (ex: ${window.location.hostname}).`;
       } else if (err.code === 'auth/operation-not-allowed') {
         errMsg = "La méthode de connexion avec Google n'est pas activée dans votre console Firebase. Veuillez l'activer sous Authentication > Sign-in method.";
+      } else if (err.code === 'auth/network-request-failed') {
+        errMsg = "La connexion Google a été bloquée par les restrictions réseau ou de cookies de votre navigateur dans cet iframe d'aperçu.";
       } else if (err.message) {
         errMsg = `Erreur de connexion : ${err.message}`;
       }
+
+      // Check if we are inside an iframe or if it's a typical iframe block (network-request-failed / popup-blocked)
+      const isIframe = typeof window !== 'undefined' && (window.self !== window.top || window.location.search.includes('iframe=true'));
+      if (isIframe || err.code === 'auth/network-request-failed' || err.code === 'auth/popup-blocked') {
+        console.warn('Google Auth failed/blocked in sandbox environment. Activating Local Guest Session fallback.');
+        const fallbackUser = {
+          uid: 'local_google_guest',
+          email: 'invite.google@resumeflow.local',
+          displayName: 'Invité Google (Mode Secours)',
+          photoURL: null,
+          isLocal: true
+        };
+        setUser(fallbackUser);
+        localStorage.setItem('supabase_user_session', JSON.stringify(fallbackUser));
+        setError("La connexion avec Google a échoué (bloquée par le navigateur dans l'aperçu d'édition). Pour ne pas bloquer votre travail, nous vous avons connecté sous un compte Démo Local temporaire ! Vos modifications seront enregistrées localement.");
+        setLoading(false);
+        // Dispatch window events to notify components
+        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new Event('supabase-auth-change'));
+        return;
+      }
+
       setError(errMsg);
       throw new Error(errMsg);
     } finally {
@@ -344,6 +368,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       localStorage.removeItem('supabase_user_session');
+      try {
+        const { supabase } = await import('../lib/supabase');
+        await supabase.auth.signOut();
+      } catch (e) {
+        console.warn('Supabase signout failed or not available:', e);
+      }
       await signOut(auth);
       setUser(null);
     } catch (err: any) {

@@ -388,7 +388,7 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Handle loading user data from Firestore on login
   useEffect(() => {
     let active = true;
-    if (!user) {
+    if (!user || user.isLocal || user.isSupabase) {
       setIsCloudSynced(false);
       return;
     }
@@ -534,7 +534,7 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       try {
         localStorage.setItem('cv-data-v3', JSON.stringify(data));
 
-        if (user) {
+        if (user && !user.isLocal && !user.isSupabase) {
           try {
             const dataDocRef = doc(db, 'users', user.uid, 'cv', 'data');
             await setDoc(dataDocRef, data);
@@ -607,7 +607,7 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           setAutoSaveTime(timeString);
           console.log(`[Backup Engine] Periodic auto-save backup triggered at ${timeString}`);
 
-          if (user) {
+          if (user && !user.isLocal && !user.isSupabase) {
             const dataDocRef = doc(db, 'users', user.uid, 'cv', 'data');
             setDoc(dataDocRef, data)
               .then(() => {
@@ -632,7 +632,7 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Sync exports history with Firestore when changed
   useEffect(() => {
-    if (user) {
+    if (user && !user.isLocal && !user.isSupabase) {
       const exportsDocRef = doc(db, 'users', user.uid, 'cv', 'exports');
       setDoc(exportsDocRef, { items: exports })
         .then(() => {

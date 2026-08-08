@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
+import { initializeFirestore, getFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 
 export const firebaseConfig = {
   projectId: (import.meta as any).env?.VITE_FIREBASE_PROJECT_ID || "ungoogly-team-mdw77",
@@ -15,11 +15,34 @@ export const firebaseConfig = {
 // Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
-const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager(),
-  }),
-  experimentalForceLongPolling: true,
-}, firebaseConfig.firestoreDatabaseId);
+
+// Safe initialization of Firestore to handle sandbox / cross-origin iframe storage restrictions gracefully
+let db: any;
+try {
+  const isIframe = typeof window !== 'undefined' && (window.self !== window.top || window.location.search.includes('iframe=true'));
+  if (isIframe) {
+    console.log("[Firebase] Iframe detected, initializing Firestore with long polling and standard memory cache.");
+    db = initializeFirestore(app, {
+      experimentalForceLongPolling: true,
+    }, firebaseConfig.firestoreDatabaseId);
+  } else {
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager(),
+      }),
+      experimentalForceLongPolling: true,
+    }, firebaseConfig.firestoreDatabaseId);
+  }
+} catch (e) {
+  console.warn("[Firebase] Failed to initialize Firestore with custom local cache (likely blocked inside sandboxed iframe), falling back to standard setup:", e);
+  try {
+    db = initializeFirestore(app, {
+      experimentalForceLongPolling: true,
+    }, firebaseConfig.firestoreDatabaseId);
+  } catch (err2) {
+    console.error("[Firebase] Standard initializeFirestore failed, falling back to basic getFirestore:", err2);
+    db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+  }
+}
 
 export { app, auth, db };
