@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Edit3, Check, Sparkles, Plus } from 'lucide-react';
+import { GripVertical, Edit3, Check, Sparkles, Plus, Mail, Phone, MapPin, Globe } from 'lucide-react';
 import { CVSection, CVTheme } from '../../types/cv';
 import { useState, useEffect } from 'react';
 import { useCVData } from '../../hooks/useCVData';
@@ -511,11 +511,31 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
                 <h1 className="text-3xl font-extrabold text-[#0a0a0a] tracking-tight uppercase">{content.fullName || 'Votre Nom'}</h1>
                 <p className="text-sm font-bold uppercase tracking-widest mt-1" style={{ color: primaryColor }}>{content.title || 'Intitulé de poste'}</p>
               </div>
-              <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-zinc-600 font-medium">
-                {content.email && <span>📧 {content.email}</span>}
-                {content.phone && <span>📞 {content.phone}</span>}
-                {content.location && <span>📍 {content.location}</span>}
-                {content.website && <span>🌐 {content.website}</span>}
+              <div className="flex flex-wrap justify-center gap-x-5 gap-y-1.5 text-xs text-zinc-600 font-medium">
+                {content.email && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                    <span>{content.email}</span>
+                  </span>
+                )}
+                {content.phone && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                    <span>{content.phone}</span>
+                  </span>
+                )}
+                {content.location && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                    <span>{content.location}</span>
+                  </span>
+                )}
+                {content.website && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                    <span>{content.website}</span>
+                  </span>
+                )}
               </div>
               {content.summary && (
                 <p className="text-xs text-zinc-700 leading-relaxed max-w-xl mx-auto italic">
@@ -533,11 +553,31 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
                 <div className="space-y-2 flex-1 text-center md:text-left">
                   <h1 className="text-3xl font-black tracking-tight">{content.fullName || 'Votre Nom'}</h1>
                   <p className="text-sm font-semibold opacity-90 mt-1">{content.title || 'Intitulé de poste'}</p>
-                  <div className="flex flex-wrap justify-center md:justify-start gap-x-4 gap-y-1 text-xs opacity-90 mt-4 font-medium">
-                    {content.email && <span>📧 {content.email}</span>}
-                    {content.phone && <span>📞 {content.phone}</span>}
-                    {content.location && <span>📍 {content.location}</span>}
-                    {content.website && <span>🌐 {content.website}</span>}
+                  <div className="flex flex-wrap justify-center md:justify-start gap-x-5 gap-y-1.5 text-xs opacity-95 mt-4 font-medium">
+                    {content.email && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 opacity-80 shrink-0" />
+                        <span>{content.email}</span>
+                      </span>
+                    )}
+                    {content.phone && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Phone className="w-3.5 h-3.5 opacity-80 shrink-0" />
+                        <span>{content.phone}</span>
+                      </span>
+                    )}
+                    {content.location && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 opacity-80 shrink-0" />
+                        <span>{content.location}</span>
+                      </span>
+                    )}
+                    {content.website && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Globe className="w-3.5 h-3.5 opacity-80 shrink-0" />
+                        <span>{content.website}</span>
+                      </span>
+                    )}
                   </div>
                 </div>
                 {content.showPhoto !== false && content.photo && (
@@ -597,9 +637,11 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
                 <h1 className="text-3xl font-normal tracking-widest text-[#0a0a0a] uppercase">{content.fullName || 'Votre Nom'}</h1>
                 <p className="text-xs font-semibold uppercase tracking-widest mt-2 text-amber-800" style={{ color: primaryColor }}>{content.title || 'Intitulé de poste'}</p>
               </div>
-              <div className="flex flex-wrap justify-center gap-x-5 gap-y-1 text-xs text-zinc-600 font-light italic">
+              <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-1.5 text-xs text-zinc-600 font-light italic">
                 {content.email && <span>{content.email}</span>}
+                {content.email && (content.phone || content.location) && <span className="text-amber-800/40 text-[10px] select-none">•</span>}
                 {content.phone && <span>{content.phone}</span>}
+                {content.phone && content.location && <span className="text-amber-800/40 text-[10px] select-none">•</span>}
                 {content.location && <span>{content.location}</span>}
               </div>
               {content.summary && (
@@ -625,11 +667,31 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
                 </div>
               )}
             </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500 font-medium">
-              {content.email && <span>📧 {content.email}</span>}
-              {content.phone && <span>📞 {content.phone}</span>}
-              {content.location && <span>📍 {content.location}</span>}
-              {content.website && <span>🌐 {content.website}</span>}
+            <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-zinc-500 font-medium">
+              {content.email && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                  <span>{content.email}</span>
+                </span>
+              )}
+              {content.phone && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                  <span>{content.phone}</span>
+                </span>
+              )}
+              {content.location && (
+                <span className="inline-flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                  <span>{content.location}</span>
+                </span>
+              )}
+              {content.website && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                  <span>{content.website}</span>
+                </span>
+              )}
             </div>
             {content.summary && (
               <p className="text-xs text-zinc-600 leading-relaxed pt-2 italic text-left">
@@ -643,10 +705,12 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
         return (
           <div className={`space-y-4 ${fontFamilyClass}`}>
             <h2
-              className="text-xs font-bold uppercase tracking-widest pb-1 border-b"
-              style={{ color: primaryColor, borderColor: `${primaryColor}40` }}
+              className="text-xs font-extrabold uppercase tracking-widest pb-1.5 border-b-2"
+              style={{ color: primaryColor, borderColor: `${primaryColor}25` }}
             >
-              {content.title || 'Expérience Professionnelle'}
+              <span className="relative pb-1.5 inline-block border-b-2" style={{ borderColor: primaryColor, marginBottom: '-8px' }}>
+                {content.title || 'Expérience Professionnelle'}
+              </span>
             </h2>
             <div className={spacingClass}>
               {(content.items || []).map((item: any, idx: number) => (
@@ -667,10 +731,12 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
         return (
           <div className={`space-y-3 ${fontFamilyClass}`}>
             <h2
-              className="text-xs font-bold uppercase tracking-widest pb-1 border-b"
-              style={{ color: primaryColor, borderColor: `${primaryColor}40` }}
+              className="text-xs font-extrabold uppercase tracking-widest pb-1.5 border-b-2"
+              style={{ color: primaryColor, borderColor: `${primaryColor}25` }}
             >
-              {content.title || 'Formation'}
+              <span className="relative pb-1.5 inline-block border-b-2" style={{ borderColor: primaryColor, marginBottom: '-8px' }}>
+                {content.title || 'Formation'}
+              </span>
             </h2>
             <div className={spacingClass}>
               {(content.items || []).map((item: any, idx: number) => (
@@ -690,10 +756,12 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
         return (
           <div className={`space-y-3 ${fontFamilyClass}`}>
             <h2
-              className="text-xs font-bold uppercase tracking-widest pb-1 border-b"
-              style={{ color: primaryColor, borderColor: `${primaryColor}40` }}
+              className="text-xs font-extrabold uppercase tracking-widest pb-1.5 border-b-2"
+              style={{ color: primaryColor, borderColor: `${primaryColor}25` }}
             >
-              {content.title || 'Compétences'}
+              <span className="relative pb-1.5 inline-block border-b-2" style={{ borderColor: primaryColor, marginBottom: '-8px' }}>
+                {content.title || 'Compétences'}
+              </span>
             </h2>
             <div className="flex flex-wrap gap-1.5">
               {(content.skillsList || []).map((skill: string, idx: number) => (
