@@ -263,7 +263,7 @@ export const Login = () => {
   }, [location.search]);
 
   return (
-    <div className="min-h-screen bg-slate-50/70 flex flex-col justify-between">
+    <div className="w-full bg-slate-50/70 flex flex-col items-center">
       <SEO 
         title="Sauvegardez votre CV | ResumeFlow" 
         description="Créez votre compte gratuit pour enregistrer, modifier et télécharger vos CV professionnels."
@@ -643,20 +643,6 @@ export const Login = () => {
 
         </div>
       </div>
-
-      {/* Modern Compact Footer */}
-      <footer className="bg-white border-t border-zinc-200/60 py-6 text-center text-xs text-zinc-400">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© {new Date().getFullYear()} ResumeFlow. Tous droits réservés.</p>
-          <div className="flex gap-4">
-            <Link to="/sitemap" className="hover:text-zinc-600 transition-colors">Sitemap</Link>
-            <span className="text-zinc-200">|</span>
-            <a href="#" className="hover:text-zinc-600 transition-colors">Mentions Légales</a>
-            <span className="text-zinc-200">|</span>
-            <a href="#" className="hover:text-zinc-600 transition-colors">Sécurité</a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

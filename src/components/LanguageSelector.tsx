@@ -47,8 +47,8 @@ export const LanguageSelector: React.FC<{ compact?: boolean }> = ({ compact = fa
     <div className="relative inline-block text-left" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`inline-flex items-center gap-1.5 rounded-full border border-zinc-200/80 bg-white/80 hover:bg-zinc-50 transition-all font-medium text-xs text-zinc-800 shadow-2xs ${
-          compact ? 'px-2.5 py-1' : 'px-3 py-1.5'
+        className={`inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 transition-all font-bold text-xs text-zinc-700 hover:text-[#0a0a0a] shadow-xs ${
+          compact ? 'px-2.5 py-1.5' : 'h-10 px-3'
         }`}
         title="Changer de langue / Switch language"
       >
