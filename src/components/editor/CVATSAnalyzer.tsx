@@ -15,6 +15,7 @@ import {
   Sparkle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { analyzeCVATSLocal } from '../../utils/atsAnalyzerAlgorithm';
 
 interface SectionEval {
   section: string;
@@ -40,35 +41,22 @@ export const CVATSAnalyzer: React.FC = () => {
 
   const isFr = language === 'fr';
 
-  const triggerAnalysis = async () => {
+  const triggerAnalysis = () => {
     setLoading(true);
     setError(null);
-    try {
-      const response = await fetch('/api/cv/analyze', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ cvData: data }),
-      });
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || "Échec de l'analyse IA.");
+    
+    // Snappy offline simulation matching the premium UI flow
+    setTimeout(() => {
+      try {
+        const analysisData = analyzeCVATSLocal(data, isFr);
+        setResult(analysisData);
+      } catch (err: any) {
+        console.error("Local ATS analysis error:", err);
+        setError(err.message || "Impossible de réaliser l'analyse locale du CV.");
+      } finally {
+        setLoading(false);
       }
-
-      const analysisData = await response.json();
-      setResult(analysisData);
-    } catch (err: any) {
-      console.error(err);
-      let errMsg = err.message || "Impossible d'analyser le CV. Veuillez réessayer.";
-      if (errMsg === 'Failed to fetch' || errMsg.includes('fetch')) {
-        errMsg = "Impossible de se connecter au service d'analyse (Erreur réseau). Veuillez rafraîchir la page ou ouvrir l'application dans un nouvel onglet.";
-      }
-      setError(errMsg);
-    } finally {
-      setLoading(false);
-    }
+    }, 1000);
   };
 
   const getStatusIcon = (status: string) => {

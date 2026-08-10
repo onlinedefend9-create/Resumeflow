@@ -75,6 +75,34 @@ async function generateContentWithRetryAndFallback(params: any) {
   throw lastError || new Error("Tous les modèles Gemini ont échoué.");
 }
 
+function extractResponseText(response: any): string {
+  if (!response) {
+    throw new Error("Aucune réponse n'a été retournée par le modèle Gemini.");
+  }
+  // 1. Try .text property
+  if (typeof response.text === 'string') {
+    return response.text;
+  }
+  // 2. Try .text() method
+  if (typeof response.text === 'function') {
+    return response.text();
+  }
+  // 3. Try candidates[0].content.parts[0].text
+  const partText = response.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (typeof partText === 'string') {
+    return partText;
+  }
+  // 4. Try candidates[0].content.parts[0] being a string
+  const part = response.candidates?.[0]?.content?.parts?.[0];
+  if (typeof part === 'string') {
+    return part;
+  }
+  
+  // Log the actual structure of response to see why it didn't match
+  console.error("Impossible d'extraire le texte de la réponse Gemini. Structure complète :", JSON.stringify(response));
+  throw new Error("La réponse de l'IA ne contient aucun texte exploitable.");
+}
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -612,7 +640,14 @@ Règles de structuration des sections :
         }
       });
 
-      const parsedJSON = JSON.parse(response.text);
+      const responseTextResult = extractResponseText(response);
+      let parsedJSON;
+      try {
+        parsedJSON = JSON.parse(responseTextResult);
+      } catch (parseErr: any) {
+        console.error("Failed to parse Gemini response JSON:", parseErr, "Raw Text:", responseTextResult);
+        throw new Error("La réponse reçue de l'IA n'est pas au format JSON attendu.");
+      }
       res.json(parsedJSON);
     } catch (err: any) {
       console.error("Gemini parse text error:", err);
@@ -682,7 +717,14 @@ Règles de diagnostic :
         }
       });
 
-      const parsedJSON = JSON.parse(response.text);
+      const responseTextResult = extractResponseText(response);
+      let parsedJSON;
+      try {
+        parsedJSON = JSON.parse(responseTextResult);
+      } catch (parseErr: any) {
+        console.error("Failed to parse Gemini ATS analysis response JSON:", parseErr, "Raw Text:", responseTextResult);
+        throw new Error("La réponse d'analyse reçue de l'IA n'est pas au format JSON attendu.");
+      }
       res.json(parsedJSON);
     } catch (err: any) {
       console.error("Gemini ATS analysis error:", err);

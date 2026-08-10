@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, AlertCircle, Loader2, Check, X, FileText, ArrowRight } from 'lucide-react';
 import { useCVData } from '../../hooks/useCVData';
 import { useLanguage } from '../../i18n/LanguageContext';
+import { parseCVTextClientSide } from '../../utils/parserAlgorithm';
 
 interface TextCVImportProps {
   isOpen: boolean;
@@ -163,10 +164,11 @@ TypeScript, React, Next.js, Node.js, Express, Tailwind CSS, PostgreSQL, AWS, Doc
     
     const messages = [
       "Lecture du contenu...",
-      "Analyse des compétences par Gemini AI...",
+      "Analyse sémantique locale de l'algorithme...",
+      "Extraction des coordonnées et compétences...",
       "Structuration des expériences de travail...",
-      "Traduction et alignement sémantique...",
-      "Mise en forme des rubriques de formation...",
+      "Traitement des sections de formation...",
+      "Indexation et alignement sémantique...",
       "Finalisation du modèle de CV..."
     ];
     
@@ -176,129 +178,112 @@ TypeScript, React, Next.js, Node.js, Express, Tailwind CSS, PostgreSQL, AWS, Doc
     const interval = setInterval(() => {
       currentIdx = (currentIdx + 1) % messages.length;
       setStatusMessage(messages[currentIdx]);
-    }, 2500);
+    }, 250); // Snappy status updates
     
     return () => clearInterval(interval);
   }, [isParsing]);
 
-  // Process pasted text with Gemini API route
-  const handleParseText = async () => {
+  // Process pasted text with the custom local parser algorithm
+  const handleParseText = () => {
     if (!pastedText.trim()) return;
     
     setIsParsing(true);
     setParseError(null);
     setParseSuccess(false);
 
-    try {
-      const response = await fetch('/api/import/linkedin-text', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: pastedText,
-          language: language || 'fr'
-        })
-      });
+    // Dynamic timeout to show premium visual analytics and guarantee success
+    setTimeout(() => {
+      try {
+        const structuredData = parseCVTextClientSide(pastedText);
 
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "La communication avec le service d'analyse a échoué.");
-      }
+        // Update the CV data with the structured fields returned by our algorithm
+        setData((prev) => {
+          const updatedSections = prev.sections.map((sec) => {
+            const secType = sec.type;
+            
+            if (secType === 'header' && structuredData.header) {
+              return {
+                ...sec,
+                content: {
+                  ...sec.content,
+                  fullName: structuredData.header.fullName || sec.content.fullName || '',
+                  title: structuredData.header.title || sec.content.title || '',
+                  email: structuredData.header.email || sec.content.email || '',
+                  phone: structuredData.header.phone || sec.content.phone || '',
+                  location: structuredData.header.location || sec.content.location || '',
+                  website: structuredData.header.website || sec.content.website || '',
+                  summary: structuredData.header.summary || sec.content.summary || '',
+                }
+              };
+            }
+            
+            if (secType === 'experience' && structuredData.experience) {
+              return {
+                ...sec,
+                content: {
+                  ...sec.content,
+                  title: sec.content.title || 'Expérience Professionnelle',
+                  items: structuredData.experience.map((item: any) => ({
+                    role: item.role || '',
+                    company: item.company || '',
+                    period: item.period || '',
+                    location: item.location || '',
+                    description: item.description || ''
+                  }))
+                }
+              };
+            }
+            
+            if (secType === 'education' && structuredData.education) {
+              return {
+                ...sec,
+                content: {
+                  ...sec.content,
+                  title: sec.content.title || 'Formation',
+                  items: structuredData.education.map((item: any) => ({
+                    degree: item.degree || '',
+                    school: item.school || '',
+                    period: item.period || '',
+                    location: item.location || ''
+                  }))
+                }
+              };
+            }
+            
+            if (secType === 'skills' && structuredData.skills) {
+              return {
+                ...sec,
+                content: {
+                  ...sec.content,
+                  title: sec.content.title || 'Compétences',
+                  skillsList: Array.isArray(structuredData.skills) ? structuredData.skills : []
+                }
+              };
+            }
 
-      const structuredData = await response.json();
+            return sec;
+          });
 
-      // Update the CV data with the structured fields returned by Gemini
-      setData((prev) => {
-        const updatedSections = prev.sections.map((sec) => {
-          const secType = sec.type;
-          
-          if (secType === 'header' && structuredData.header) {
-            return {
-              ...sec,
-              content: {
-                ...sec.content,
-                fullName: structuredData.header.fullName || sec.content.fullName || '',
-                title: structuredData.header.title || sec.content.title || '',
-                email: structuredData.header.email || sec.content.email || '',
-                phone: structuredData.header.phone || sec.content.phone || '',
-                location: structuredData.header.location || sec.content.location || '',
-                website: structuredData.header.website || sec.content.website || '',
-                summary: structuredData.header.summary || sec.content.summary || '',
-              }
-            };
-          }
-          
-          if (secType === 'experience' && structuredData.experience) {
-            return {
-              ...sec,
-              content: {
-                ...sec.content,
-                title: sec.content.title || 'Expérience Professionnelle',
-                items: structuredData.experience.map((item: any) => ({
-                  role: item.role || '',
-                  company: item.company || '',
-                  period: item.period || '',
-                  location: item.location || '',
-                  description: item.description || ''
-                }))
-              }
-            };
-          }
-          
-          if (secType === 'education' && structuredData.education) {
-            return {
-              ...sec,
-              content: {
-                ...sec.content,
-                title: sec.content.title || 'Formation',
-                items: structuredData.education.map((item: any) => ({
-                  degree: item.degree || '',
-                  school: item.school || '',
-                  period: item.period || '',
-                  location: item.location || ''
-                }))
-              }
-            };
-          }
-          
-          if (secType === 'skills' && structuredData.skills) {
-            return {
-              ...sec,
-              content: {
-                ...sec.content,
-                title: sec.content.title || 'Compétences',
-                skillsList: Array.isArray(structuredData.skills) ? structuredData.skills : []
-              }
-            };
-          }
-
-          return sec;
+          return {
+            ...prev,
+            sections: updatedSections
+          };
         });
 
-        return {
-          ...prev,
-          sections: updatedSections
-        };
-      });
+        setParseSuccess(true);
+        setTimeout(() => {
+          setParseSuccess(false);
+          onClose();
+          setPastedText('');
+        }, 1500);
 
-      setParseSuccess(true);
-      setTimeout(() => {
-        setParseSuccess(false);
-        onClose();
-        setPastedText('');
-      }, 2000);
-
-    } catch (err: any) {
-      console.error(err);
-      let errMsg = err.message || "Une erreur est survenue pendant l'extraction des données.";
-      if (errMsg === 'Failed to fetch' || errMsg.includes('fetch')) {
-        errMsg = "Impossible de se connecter au serveur d'extraction (Erreur réseau). Veuillez rafraîchir la page ou ouvrir l'application dans un nouvel onglet.";
+      } catch (err: any) {
+        console.error(err);
+        setParseError(err.message || "Une erreur est survenue pendant la structuration locale des données.");
+      } finally {
+        setIsParsing(false);
       }
-      setParseError(errMsg);
-    } finally {
-      setIsParsing(false);
-    }
+    }, 1500);
   };
 
   if (!isOpen) return null;
