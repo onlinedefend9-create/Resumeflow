@@ -315,7 +315,7 @@ export const sampleCVsByLanguage: Record<string, CVData> = {
 };
 
 export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { language, setLanguage } = useLanguage();
   const { user } = useAuth();
 
@@ -518,6 +518,16 @@ export const CVDataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }));
     }
   }, [searchParams]);
+
+  // Sync URL query parameter 'lang' with application language context when language changes
+  useEffect(() => {
+    const urlLang = searchParams.get('lang');
+    if (urlLang && ['fr', 'en', 'es', 'de'].includes(urlLang) && urlLang !== language) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set('lang', language);
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [language, searchParams, setSearchParams]);
 
   const isFirstMount = useRef(true);
 
