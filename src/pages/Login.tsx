@@ -251,60 +251,6 @@ export const Login = () => {
     }
   };
 
-  const handleLinkedInAuth = async () => {
-    setError(null);
-    setSuccessMessage(null);
-
-    const isIframe = typeof window !== 'undefined' && (window.self !== window.top || window.location.search.includes('iframe=true'));
-    if (isIframe) {
-      console.log('[LinkedIn Auth] Iframe détecté. Redirection hors iframe...');
-      try {
-        window.top!.location.href = '/api/auth/linkedin';
-      } catch (e) {
-        window.open('/api/auth/linkedin', '_blank');
-      }
-      return;
-    }
-
-    setLoading(true);
-    try {
-      console.log('[LinkedIn Auth] Récupération de l\'URL d\'autorisation...');
-      const response = await fetch('/api/auth/linkedin/url');
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || "Impossible de récupérer l'URL de connexion LinkedIn.");
-      }
-      const { url } = await response.json();
-      
-      if (url) {
-        console.log('[LinkedIn Auth] Ouverture du popup LinkedIn:', url);
-        const popup = window.open(
-          url,
-          'linkedin_oauth_popup',
-          'width=600,height=700,status=no,resizable=yes,scrollbars=yes'
-        );
-        
-        if (!popup) {
-          throw new Error("Le pop-up de connexion LinkedIn a été bloqué par votre navigateur. Veuillez autoriser les pop-ups pour ce site.");
-        }
-        
-        // Monitor closure to reset loading state as backup
-        const timer = setInterval(() => {
-          if (popup.closed) {
-            clearInterval(timer);
-            setLoading(false);
-          }
-        }, 1000);
-      } else {
-        throw new Error("Aucune URL d'authentification LinkedIn reçue du serveur.");
-      }
-    } catch (err: any) {
-      console.error('LinkedIn OAuth Error:', err);
-      setError(err.message || 'Impossible de se connecter avec LinkedIn.');
-      setLoading(false);
-    }
-  };
-
   // Handle automatic social login from parameter (when opened outside iframe)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -313,9 +259,6 @@ export const Login = () => {
     if (providerParam === 'google') {
       console.log('[Login] Auto-déclenchement de la connexion Google...');
       handleGoogleAuth();
-    } else if (providerParam === 'linkedin') {
-      console.log('[Login] Auto-déclenchement de la connexion LinkedIn...');
-      handleLinkedInAuth();
     }
   }, [location.search]);
 
@@ -696,18 +639,6 @@ export const Login = () => {
                     />
                   </svg>
                   <span>S'identifier avec Google</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleLinkedInAuth}
-                  disabled={loading}
-                  className="w-full py-3 px-5 bg-white hover:bg-zinc-50 active:bg-zinc-100 border border-zinc-200 text-[#0077b5] hover:text-[#005582] rounded-xl text-sm font-bold flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-sm disabled:opacity-50 disabled:pointer-events-none"
-                >
-                  <svg className="w-4.5 h-4.5 fill-[#0077b5]" viewBox="0 0 24 24">
-                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                  </svg>
-                  <span>S'identifier avec LinkedIn</span>
                 </button>
 
                 <button

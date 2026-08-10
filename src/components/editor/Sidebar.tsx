@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Briefcase, GraduationCap, Award, FolderKanban, FileText, ArrowLeft, Palette, LayoutTemplate, Languages, Check, Sparkles, Zap, Download, Eye, X, Linkedin } from 'lucide-react';
+import { Briefcase, GraduationCap, Award, FolderKanban, FileText, ArrowLeft, Palette, LayoutTemplate, Languages, Check, Sparkles, Zap, Download, Eye, X } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { useCVData } from '../../hooks/useCVData';
-import { useLinkedInImport } from '../../hooks/useLinkedInImport';
 import { TemplateId } from '../../types/cv';
-import { LinkedInImport } from './LinkedInImport';
+import { TextCVImport } from './TextCVImport';
 
 interface SidebarProps {
   activeTab?: string;
@@ -15,8 +14,7 @@ interface SidebarProps {
 export const Sidebar = ({ activeTab = 'sections', setActiveTab }: SidebarProps) => {
   const { t, language, setLanguage } = useLanguage();
   const { data, setData, updateTheme, loadLanguagePreset, exports, deleteExport } = useCVData();
-  const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
-  const { LinkedInImportButton } = useLinkedInImport();
+  const [isTextImportModalOpen, setIsTextImportModalOpen] = useState(false);
 
   const handleDownloadExport = (dataUri: string, filename: string) => {
     try {
@@ -246,31 +244,30 @@ export const Sidebar = ({ activeTab = 'sections', setActiveTab }: SidebarProps) 
 
           return (
             <div className="space-y-4 animate-fadeIn">
-              {/* Premium LinkedIn Import CTA */}
-              <div className="p-4 bg-gradient-to-br from-blue-950/40 via-blue-900/10 to-transparent rounded-2xl border border-blue-900/40 space-y-3 shadow-md text-left">
+              {/* Premium AI Text Import CTA */}
+              <div className="p-4 bg-gradient-to-br from-indigo-950/40 via-indigo-900/10 to-transparent rounded-2xl border border-indigo-900/40 space-y-3 shadow-md text-left">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white shrink-0 shadow-md shadow-blue-500/10">
-                    <Linkedin className="w-4.5 h-4.5" />
+                  <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white shrink-0 shadow-md shadow-indigo-500/10">
+                    <Sparkles className="w-4.5 h-4.5" />
                   </div>
                   <div className="text-left">
                     <h4 className="text-xs font-bold text-white flex items-center gap-1">
                       Remplissage par IA
-                      <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-black bg-gradient-to-r from-blue-500 to-indigo-500 text-white leading-none scale-90">
+                      <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-black bg-gradient-to-r from-indigo-500 to-purple-500 text-white leading-none scale-90">
                         <Sparkles className="w-2.5 h-2.5 fill-white/10" /> PRO
                       </span>
                     </h4>
-                    <p className="text-[10px] text-zinc-400 font-medium">Importez votre profil LinkedIn</p>
+                    <p className="text-[10px] text-zinc-400 font-medium">Analyse et import intelligent</p>
                   </div>
                 </div>
                 
-                <LinkedInImportButton />
-
                 <button
                   type="button"
-                  onClick={() => setIsLinkedInModalOpen(true)}
-                  className="w-full text-center text-[10px] text-zinc-400 hover:text-white transition-colors underline font-semibold mt-1"
+                  onClick={() => setIsTextImportModalOpen(true)}
+                  className="w-full py-2 px-3 bg-indigo-600 hover:bg-indigo-500 border border-indigo-500 hover:border-indigo-400 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md"
                 >
-                  Ou utiliser l'analyseur de texte IA (Copier/Coller)
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Remplir mon CV par IA (Copier-coller)
                 </button>
               </div>
 
@@ -611,7 +608,7 @@ export const Sidebar = ({ activeTab = 'sections', setActiveTab }: SidebarProps) 
         <p className="text-[10px] text-zinc-600">{t.editor.localStorage}</p>
       </div>
 
-      <LinkedInImport isOpen={isLinkedInModalOpen} onClose={() => setIsLinkedInModalOpen(false)} />
+      <TextCVImport isOpen={isTextImportModalOpen} onClose={() => setIsTextImportModalOpen(false)} />
     </aside>
   );
 };

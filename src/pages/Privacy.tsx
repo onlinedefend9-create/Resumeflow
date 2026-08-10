@@ -38,9 +38,9 @@ export const Privacy = () => {
         <div className="prose prose-zinc max-w-none">
           <p className="text-zinc-600 leading-relaxed text-sm">
             {isFr ? (
-              "Chez ResumeFlow, nous prenons la protection de vos données personnelles très au sérieux. Cette politique de confidentialité détaille la manière dont nous collectons, utilisons, stockons et protégeons les informations que vous fournissez lors de l'utilisation de notre créateur de CV en ligne, de l'importateur LinkedIn IA et de nos services associés."
+              "Chez ResumeFlow, nous prenons la protection de vos données personnelles très au sérieux. Cette politique de confidentialité détaille la manière dont nous collectons, utilisons, stockons et protégeons les informations que vous fournissez lors de l'utilisation de notre créateur de CV en ligne, de l'importateur de CV assisté par l'IA et de nos services associés."
             ) : (
-              "At ResumeFlow, we take the protection of your personal data very seriously. This privacy policy details how we collect, use, store, and protect the information you provide when using our online resume builder, AI LinkedIn importer, and associated services."
+              "At ResumeFlow, we take the protection of your personal data very seriously. This privacy policy details how we collect, use, store, and protect the information you provide when using our online resume builder, AI-assisted CV importer, and associated services."
             )}
           </p>
         </div>
@@ -77,9 +77,6 @@ export const Privacy = () => {
               </li>
               <li>
                 <strong className="text-zinc-800">Compétences et projets :</strong> Listes de compétences techniques et humaines, projets personnels ou académiques détaillés.
-              </li>
-              <li>
-                <strong className="text-zinc-800">Données d'authentification LinkedIn :</strong> Si vous utilisez l'option "Connexion LinkedIn Directe", nous récupérons uniquement votre nom, prénom, email professionnel et photo de profil via l'API sécurisée officielle de LinkedIn.
               </li>
             </ul>
           </div>

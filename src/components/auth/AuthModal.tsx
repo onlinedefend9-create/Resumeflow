@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { X, Mail, Lock, User, Loader2, Sparkles, Eye, EyeOff, Check, AlertCircle, ExternalLink, Linkedin } from 'lucide-react';
+import { X, Mail, Lock, User, Loader2, Sparkles, Eye, EyeOff, Check, AlertCircle, ExternalLink } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import * as motionVal from 'motion/react';
 
@@ -168,28 +168,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleLinkedInSignIn = async () => {
-    setLocalError(null);
-    clearError();
-    try {
-      setLoadingProvider('linkedin');
-      if (isIframe) {
-        try {
-          window.top!.location.href = '/api/auth/linkedin';
-        } catch (e) {
-          window.open('/api/auth/linkedin', '_blank');
-        }
-      } else {
-        window.location.href = '/api/auth/linkedin';
-      }
-    } catch (err: any) {
-      console.error("Erreur de connexion avec LinkedIn:", err);
-      setLocalError("Impossible de démarrer l'authentification avec LinkedIn.");
-    } finally {
-      setLoadingProvider(null);
-    }
-  };
-
   const switchMode = (newMode: 'login' | 'register') => {
     setMode(newMode);
     setLocalError(null);
@@ -258,7 +236,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <AlertCircle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
                     <div className="font-semibold leading-relaxed text-amber-800">
                       <strong className="font-extrabold text-amber-900 block mb-0.5">⚠️ Environnement d'aperçu d'éditeur</strong>
-                      Pour pouvoir vous connecter ou vous inscrire (E-mail, Google ou LinkedIn), vous devez ouvrir l'application dans un nouvel onglet.
+                      Pour pouvoir vous connecter ou vous inscrire (E-mail ou Google), vous devez ouvrir l'application dans un nouvel onglet.
                     </div>
                   </div>
                   <button
@@ -284,7 +262,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 type="button"
                 onClick={handleGoogleSignIn}
                 disabled={loading || !!loadingProvider}
-                className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 border border-zinc-200 hover:border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-700 hover:text-zinc-900 rounded-xl text-sm font-bold shadow-sm transition-all cursor-pointer disabled:opacity-70 mb-3"
+                className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 border border-zinc-200 hover:border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-700 hover:text-zinc-900 rounded-xl text-sm font-bold shadow-sm transition-all cursor-pointer disabled:opacity-70 mb-4"
               >
                 {loadingProvider === 'google' ? (
                   <Loader2 className="w-4 h-4 animate-spin text-zinc-600" />
@@ -297,21 +275,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </svg>
                 )}
                 <span>{mode === 'login' ? 'Se connecter avec Google' : "S'inscrire avec Google"}</span>
-              </button>
-
-              {/* LinkedIn Sign-In */}
-              <button
-                type="button"
-                onClick={handleLinkedInSignIn}
-                disabled={loading || !!loadingProvider}
-                className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 bg-[#0A66C2] hover:bg-[#084e96] text-white rounded-xl text-sm font-bold shadow-sm transition-all cursor-pointer disabled:opacity-70 mb-4"
-              >
-                {loadingProvider === 'linkedin' ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-white" />
-                ) : (
-                  <Linkedin className="w-4 h-4 shrink-0 fill-current" />
-                )}
-                <span>{mode === 'login' ? 'Se connecter avec LinkedIn' : "S'inscrire avec LinkedIn"}</span>
               </button>
 
               <div className="relative flex items-center justify-center mb-4">
