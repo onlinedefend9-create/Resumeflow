@@ -156,7 +156,11 @@ export const useLinkedInImport = () => {
     setImportSuccess(false);
 
     if (window.self !== window.top) {
-      setOauthError("Veuillez ouvrir l'application dans un nouvel onglet pour vous connecter avec LinkedIn.");
+      try {
+        window.top!.location.href = '/api/auth/linkedin';
+      } catch (e) {
+        window.open('/api/auth/linkedin', '_blank');
+      }
       setIsOAuthLoading(false);
       return;
     }

@@ -144,10 +144,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     clearError();
     try {
       setLoadingProvider('google');
-      await loginWithGoogle();
-      onClose();
+      if (isIframe) {
+        try {
+          window.top!.location.href = `${window.location.origin}/login?provider=google`;
+        } catch (e) {
+          window.open(`${window.location.origin}/login?provider=google`, '_blank');
+        }
+      } else {
+        await loginWithGoogle();
+        onClose();
+      }
     } catch (err: any) {
-      const isIframe = typeof window !== 'undefined' && (window.self !== window.top || window.location.search.includes('iframe=true'));
       const isExpectedSandboxError = isIframe || err?.code === 'auth/network-request-failed' || err?.code === 'auth/popup-blocked' || String(err).includes('network-request-failed');
       
       if (isExpectedSandboxError) {
@@ -167,7 +174,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     try {
       setLoadingProvider('linkedin');
       if (isIframe) {
-        window.open('/api/auth/linkedin', '_blank');
+        try {
+          window.top!.location.href = '/api/auth/linkedin';
+        } catch (e) {
+          window.open('/api/auth/linkedin', '_blank');
+        }
       } else {
         window.location.href = '/api/auth/linkedin';
       }

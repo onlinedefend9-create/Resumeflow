@@ -474,8 +474,18 @@ async function startServer() {
               } else {
                 try {
                   localStorage.setItem('linkedin_profile', JSON.stringify(profile));
+                  
+                  // Établir la session utilisateur pour que la connexion soit effective hors iframe
+                  const displayName = profile.name || ((profile.given_name || '') + ' ' + (profile.family_name || '')).trim() || profile.email?.split('@')[0] || 'Utilisateur LinkedIn';
+                  const linkedinUser = {
+                    uid: 'linkedin_' + (profile.sub || profile.id),
+                    email: profile.email,
+                    displayName: displayName,
+                    photoURL: profile.picture || null
+                  };
+                  localStorage.setItem('supabase_user_session', JSON.stringify(linkedinUser));
                 } catch (e) {}
-                window.location.href = '/cv-generator?linkedin_import=success';
+                window.location.href = '/';
               }
             </script>
           </body>

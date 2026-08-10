@@ -119,7 +119,11 @@ export const LinkedInImport: React.FC<LinkedInImportProps> = ({ isOpen, onClose 
     setOauthError(null);
 
     if (window.self !== window.top) {
-      setOauthError("Pour vous connecter avec LinkedIn, veuillez ouvrir l'application dans un nouvel onglet.");
+      try {
+        window.top!.location.href = '/api/auth/linkedin';
+      } catch (e) {
+        window.open('/api/auth/linkedin', '_blank');
+      }
       setIsOAuthLoading(false);
       return;
     }

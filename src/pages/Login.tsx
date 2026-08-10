@@ -72,7 +72,21 @@ export const Login = () => {
           window.dispatchEvent(new Event('storage'));
           window.dispatchEvent(new Event('supabase-auth-change'));
         }
-        navigate(from, { replace: true });
+        
+        // If opened as a popup or new window from an iframe, close after saving session
+        const isFromIframePopup = window.opener && window.opener !== window;
+        if (isFromIframePopup) {
+          setSuccessMessage("Connexion réussie ! Cette fenêtre va se fermer...");
+          setTimeout(() => {
+            try {
+              window.close();
+            } catch (e) {
+              navigate(from, { replace: true });
+            }
+          }, 1500);
+        } else {
+          navigate(from, { replace: true });
+        }
       }
     };
     checkUser();
@@ -182,12 +196,23 @@ export const Login = () => {
   const handleGoogleAuth = async () => {
     setError(null);
     setSuccessMessage(null);
+
+    const isIframe = typeof window !== 'undefined' && (window.self !== window.top || window.location.search.includes('iframe=true'));
+    if (isIframe) {
+      console.log('[Google Auth] Iframe détecté. Redirection hors iframe...');
+      try {
+        window.top!.location.href = `${window.location.origin}/login?provider=google`;
+      } catch (e) {
+        window.open(`${window.location.origin}/login?provider=google`, '_blank');
+      }
+      return;
+    }
+
     setLoading(true);
     try {
       console.log('[Google Auth] Initialisation via Firebase...');
       await loginWithGoogle();
     } catch (err: any) {
-      const isIframe = typeof window !== 'undefined' && (window.self !== window.top || window.location.search.includes('iframe=true'));
       const isExpectedSandboxError = isIframe || err?.code === 'auth/network-request-failed' || err?.code === 'auth/popup-blocked' || String(err).includes('network-request-failed');
       
       if (isExpectedSandboxError) {
@@ -204,8 +229,19 @@ export const Login = () => {
   const handleLinkedInAuth = async () => {
     setError(null);
     setSuccessMessage(null);
-    setLoading(true);
 
+    const isIframe = typeof window !== 'undefined' && (window.self !== window.top || window.location.search.includes('iframe=true'));
+    if (isIframe) {
+      console.log('[LinkedIn Auth] Iframe détecté. Redirection hors iframe...');
+      try {
+        window.top!.location.href = '/api/auth/linkedin';
+      } catch (e) {
+        window.open('/api/auth/linkedin', '_blank');
+      }
+      return;
+    }
+
+    setLoading(true);
     try {
       console.log('[LinkedIn Auth] Récupération de l\'URL d\'autorisation...');
       const response = await fetch('/api/auth/linkedin/url');
@@ -243,6 +279,20 @@ export const Login = () => {
       setLoading(false);
     }
   };
+
+  // Handle automatic social login from parameter (when opened outside iframe)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const providerParam = params.get('provider');
+    
+    if (providerParam === 'google') {
+      console.log('[Login] Auto-déclenchement de la connexion Google...');
+      handleGoogleAuth();
+    } else if (providerParam === 'linkedin') {
+      console.log('[Login] Auto-déclenchement de la connexion LinkedIn...');
+      handleLinkedInAuth();
+    }
+  }, [location.search]);
 
   return (
     <div className="min-h-screen bg-slate-50/70 flex flex-col justify-between">
