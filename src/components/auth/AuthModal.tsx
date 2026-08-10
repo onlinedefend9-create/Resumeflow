@@ -230,25 +230,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </p>
               </div>
 
-              {isIframe && (
-                <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-850 space-y-3 mb-6 animate-fadeIn">
-                  <div className="flex items-start gap-2.5">
-                    <AlertCircle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
-                    <div className="font-semibold leading-relaxed text-amber-800">
-                      <strong className="font-extrabold text-amber-900 block mb-0.5">⚠️ Environnement d'aperçu d'éditeur</strong>
-                      Pour pouvoir vous connecter ou vous inscrire (E-mail ou Google), vous devez ouvrir l'application dans un nouvel onglet.
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => window.open(window.location.href, '_blank')}
-                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-sm transition-all cursor-pointer"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span>Ouvrir l'application dans un nouvel onglet</span>
-                  </button>
-                </div>
-              )}
+
 
               {activeError && (
                 <div className="p-3.5 rounded-xl bg-red-50 border border-red-100 text-xs font-semibold text-red-600 flex items-start gap-2 animate-fadeIn mb-4">

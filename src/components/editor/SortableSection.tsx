@@ -743,10 +743,10 @@ export const SortableSection = ({ section, theme, onUpdate }: Props) => {
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative bg-white rounded-xl p-4 transition-all border ${
+      className={`group relative transition-all duration-200 border-2 rounded-lg p-3 sm:p-4 ${
         isDragging
-          ? 'shadow-xl opacity-80 z-50'
-          : 'border-transparent hover:border-zinc-200 hover:shadow-sm'
+          ? 'shadow-lg bg-zinc-50/95 border-blue-500/50 z-50'
+          : 'border-transparent hover:border-dashed hover:border-zinc-200 hover:bg-zinc-50/30'
       }`}
     >
       {/* Drag & Controls Overlay */}

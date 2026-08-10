@@ -558,54 +558,57 @@ export const Sidebar = ({ activeTab = 'sections', setActiveTab }: SidebarProps) 
         )}
       </div>
 
-      {/* PDF Export History */}
-      {exports && exports.length > 0 && (
-        <div className="pt-4 border-t border-zinc-800/80 px-1 space-y-2 mt-6">
-          <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
-            <Download className="w-3.5 h-3.5 text-blue-500" />
-            <span>{language === 'fr' ? 'Exports PDF récents' : 'Recent PDF Exports'}</span>
-          </h3>
-          <div className="space-y-1.5 max-h-40 overflow-y-auto">
-            {exports.map((item) => (
-              <div key={item.id} className="p-2 bg-zinc-900/80 rounded-lg border border-zinc-800 flex flex-col gap-1 text-[11px] text-zinc-300">
-                <div className="flex items-center justify-between font-bold text-white">
-                  <span className="truncate max-w-[140px]">{item.name}</span>
-                  <span className="text-[9px] text-zinc-500 font-normal">{item.date}</span>
+      {/* Pied de page et historique des exports regroupés */}
+      <div className="mt-auto pt-5 border-t border-zinc-800/80 px-1 space-y-5 shrink-0">
+        {/* PDF Export History */}
+        {exports && exports.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+              <Download className="w-3.5 h-3.5 text-blue-500" />
+              <span>{language === 'fr' ? 'Exports PDF récents' : 'Recent PDF Exports'}</span>
+            </h3>
+            <div className="space-y-1.5 max-h-40 overflow-y-auto">
+              {exports.map((item) => (
+                <div key={item.id} className="p-2 bg-zinc-900/80 rounded-lg border border-zinc-800 flex flex-col gap-1 text-[11px] text-zinc-300">
+                  <div className="flex items-center justify-between font-bold text-white">
+                    <span className="truncate max-w-[140px]">{item.name}</span>
+                    <span className="text-[9px] text-zinc-500 font-normal">{item.date}</span>
+                  </div>
+                  <div className="flex items-center gap-2 pt-1.5 border-t border-zinc-800/60">
+                    <button
+                      onClick={() => handleDownloadExport(item.dataUri, item.name)}
+                      className="flex-1 py-1 px-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold text-center transition-all cursor-pointer"
+                    >
+                      {language === 'fr' ? 'Télécharger' : 'Download'}
+                    </button>
+                    <button
+                      onClick={() => handleOpenExport(item.dataUri)}
+                      className="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-bold transition-all cursor-pointer"
+                    >
+                      {language === 'fr' ? 'Ouvrir' : 'Open'}
+                    </button>
+                    <button
+                      onClick={() => deleteExport(item.id)}
+                      className="p-1 hover:text-red-500 text-zinc-500 rounded transition-all cursor-pointer"
+                      title={language === 'fr' ? 'Supprimer' : 'Delete'}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 pt-1.5 border-t border-zinc-800/60">
-                  <button
-                    onClick={() => handleDownloadExport(item.dataUri, item.name)}
-                    className="flex-1 py-1 px-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold text-center transition-all cursor-pointer"
-                  >
-                    {language === 'fr' ? 'Télécharger' : 'Download'}
-                  </button>
-                  <button
-                    onClick={() => handleOpenExport(item.dataUri)}
-                    className="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-bold transition-all cursor-pointer"
-                  >
-                    {language === 'fr' ? 'Ouvrir' : 'Open'}
-                  </button>
-                  <button
-                    onClick={() => deleteExport(item.id)}
-                    className="p-1 hover:text-red-500 text-zinc-500 rounded transition-all cursor-pointer"
-                    title={language === 'fr' ? 'Supprimer' : 'Delete'}
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Footer Auto-save status */}
-      <div className="pt-4 border-t border-zinc-800/80 px-1 text-xs text-zinc-500 space-y-1 mt-6">
-        <div className="flex items-center justify-between">
-          <span>{t.editor.autoSave}</span>
-          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+        {/* Footer Auto-save status */}
+        <div className="text-xs text-zinc-500 space-y-1 pt-1">
+          <div className="flex items-center justify-between">
+            <span>{t.editor.autoSave}</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+          </div>
+          <p className="text-[10px] text-zinc-600">{t.editor.localStorage}</p>
         </div>
-        <p className="text-[10px] text-zinc-600">{t.editor.localStorage}</p>
       </div>
 
       <TextCVImport isOpen={isTextImportModalOpen} onClose={() => setIsTextImportModalOpen(false)} />
