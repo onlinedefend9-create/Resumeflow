@@ -193,6 +193,31 @@ export const Login = () => {
     }
   };
 
+  const handleGuestLogin = () => {
+    setLoading(true);
+    setError(null);
+    setSuccessMessage("Connexion en mode invité en cours...");
+    
+    setTimeout(() => {
+      const guestUser = {
+        uid: 'guest_demo_user',
+        email: 'demo.user@resumeflow.fr',
+        displayName: 'Visiteur Démo',
+        photoURL: null,
+        isLocal: true
+      };
+      
+      localStorage.setItem('supabase_user_session', JSON.stringify(guestUser));
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new Event('supabase-auth-change'));
+      
+      setSuccessMessage("Connexion réussie ! Redirection...");
+      setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 800);
+    }, 500);
+  };
+
   const handleGoogleAuth = async () => {
     setError(null);
     setSuccessMessage(null);
@@ -683,6 +708,16 @@ export const Login = () => {
                     <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
                   </svg>
                   <span>S'identifier avec LinkedIn</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleGuestLogin}
+                  disabled={loading}
+                  className="w-full py-3 px-5 bg-amber-50 hover:bg-amber-100/70 border border-amber-200/60 text-amber-800 rounded-xl text-sm font-bold flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-xs disabled:opacity-50 disabled:pointer-events-none mt-1"
+                >
+                  <Sparkles className="w-4.5 h-4.5 text-amber-500 fill-amber-500/10 animate-pulse" />
+                  <span>Tester en mode Invité (Remplissage de démo instantané)</span>
                 </button>
               </div>
             </div>

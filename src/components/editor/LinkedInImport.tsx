@@ -26,6 +26,142 @@ export const LinkedInImport: React.FC<LinkedInImportProps> = ({ isOpen, onClose 
   // Status message for parsing
   const [statusMessage, setStatusMessage] = useState('');
 
+  // Pre-fill raw text for simulation or testing the AI analyzer
+  const handleInsertSampleText = () => {
+    setPastedText(`Alexandre Martin
+Développeur Fullstack Senior | Tech Enthusiast
+Paris, France | alexandre.martin@email.com | +33 6 12 34 56 78 | linkedin.com/in/alexandre-martin
+
+RÉSUMÉ
+Développeur Fullstack passionné avec plus de 6 ans d'expérience dans la conception et l'implémentation d'applications web scalables. Spécialisé en React, Node.js, TypeScript et architectures cloud. Adepte du Clean Code et des méthodologies agiles.
+
+EXPÉRIENCES PROFESSIONNELLES
+
+Lead Développeur Fullstack | TechCorp Solutions (Paris)
+01/2022 - Présent
+- Direction de la refonte complète de la plateforme SaaS en React/Next.js et Node.js.
+- Amélioration des temps de chargement de 40% et hausse de conversion de 15%.
+- Mise en place de pipelines de déploiement CI/CD automatisés.
+
+Développeur Fullstack React / Node | WebBuild Agency (Lyon)
+03/2019 - 12/2021
+- Développement d'applications e-commerce haut de gamme et d'outils collaboratifs en temps réel.
+- Intégration pixel-perfect avec Tailwind CSS et animations fluides.
+- Conception de bases de données relationnelles robustes avec PostgreSQL.
+
+FORMATION
+
+Master en Informatique (Génie Logiciel) | Université Paris-Saclay
+2016 - 2018
+
+Licence en Informatique | Université de Lille
+2013 - 2016
+
+COMPÉTENCES
+TypeScript, React, Next.js, Node.js, Express, Tailwind CSS, PostgreSQL, AWS, Docker, Git, Jest, Agile (Scrum)`);
+  };
+
+  // Direct simulated fill (Zero OAuth, Zero network queries, instant premium profile injection)
+  const handleSimulatedFill = () => {
+    setIsParsing(true);
+    setParseError(null);
+    setParseSuccess(false);
+    setStatusMessage("Génération instantanée du profil d'exemple...");
+    
+    setTimeout(() => {
+      setData((prev) => {
+        const updatedSections = prev.sections.map((sec) => {
+          if (sec.type === 'header') {
+            return {
+              ...sec,
+              content: {
+                ...sec.content,
+                fullName: "Alexandre Martin",
+                title: "Développeur Fullstack Senior",
+                email: "alexandre.martin@email.com",
+                phone: "+33 6 12 34 56 78",
+                location: "Paris, France",
+                website: "linkedin.com/in/alexandre-martin",
+                summary: "Développeur Fullstack passionné avec plus de 6 ans d'expérience dans la conception et l'implémentation d'applications web scalables. Spécialisé en React, Node.js, TypeScript et architectures cloud. Adepte du travail d'équipe agile.",
+              }
+            };
+          }
+          if (sec.type === 'experience') {
+            return {
+              ...sec,
+              content: {
+                ...sec.content,
+                title: "Expérience Professionnelle",
+                items: [
+                  {
+                    role: "Lead Développeur Fullstack",
+                    company: "TechCorp Solutions (Paris)",
+                    period: "2022 - Présent",
+                    location: "Paris, France",
+                    description: "• Direction de la refonte de la plateforme SaaS principale en React/Next.js.\n• Amélioration de 40% de la vitesse de chargement globale.\n• Mise en place de tests unitaires et de déploiement continu."
+                  },
+                  {
+                    role: "Développeur Fullstack React / Node",
+                    company: "WebBuild Agency",
+                    period: "2019 - 2021",
+                    location: "Lyon, France",
+                    description: "• Développement d'applications web modernes sur mesure avec React et Tailwind CSS.\n• Optimisation de requêtes SQL complexes pour bases de données PostgreSQL."
+                  }
+                ]
+              }
+            };
+          }
+          if (sec.type === 'education') {
+            return {
+              ...sec,
+              content: {
+                ...sec.content,
+                title: "Formation",
+                items: [
+                  {
+                    degree: "Master en Informatique (Génie Logiciel)",
+                    school: "Université Paris-Saclay",
+                    period: "2016 - 2018",
+                    location: "Orsay, France"
+                  },
+                  {
+                    degree: "Licence en Informatique",
+                    school: "Université de Lille",
+                    period: "2013 - 2016",
+                    location: "Lille, France"
+                  }
+                ]
+              }
+            };
+          }
+          if (sec.type === 'skills') {
+            return {
+              ...sec,
+              content: {
+                ...sec.content,
+                title: "Compétences",
+                skillsList: ["TypeScript", "React", "Next.js", "Node.js", "Express", "Tailwind CSS", "PostgreSQL", "AWS", "Docker", "Git", "Jest"]
+              }
+            };
+          }
+          return sec;
+        });
+
+        return {
+          ...prev,
+          sections: updatedSections
+        };
+      });
+
+      setIsParsing(false);
+      setParseSuccess(true);
+      setTimeout(() => {
+        setParseSuccess(false);
+        onClose();
+      }, 1500);
+    }, 1200);
+  };
+
   // Update status messages dynamically for an immersive premium feel
   useEffect(() => {
     if (!isParsing) return;
@@ -363,6 +499,27 @@ export const LinkedInImport: React.FC<LinkedInImportProps> = ({ isOpen, onClose 
                 <p>3. Cliquez sur "Extraire avec Gemini IA". Vos rubriques seront parfaitement structurées dans votre modèle de CV.</p>
               </div>
 
+              <div className="flex flex-col sm:flex-row gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleInsertSampleText}
+                  disabled={isParsing}
+                  className="flex-1 py-2 px-3 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/60 text-[11px] font-bold rounded-lg text-zinc-300 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <FileText className="w-3.5 h-3.5 text-blue-400" />
+                  Préremplir un texte d'exemple (IA)
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSimulatedFill}
+                  disabled={isParsing}
+                  className="flex-1 py-2 px-3 bg-zinc-900 hover:bg-zinc-800/80 border border-zinc-800 hover:border-zinc-700 text-[11px] font-bold rounded-lg text-amber-400 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Remplissage Direct (Sans IA / Instantané)
+                </button>
+              </div>
+
               <div className="space-y-1.5">
                 <label className="block text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">
                   Collez le texte LinkedIn ou CV ci-dessous
@@ -370,7 +527,7 @@ export const LinkedInImport: React.FC<LinkedInImportProps> = ({ isOpen, onClose 
                 <textarea
                   value={pastedText}
                   onChange={(e) => setPastedText(e.target.value)}
-                  placeholder="Collez ici les sections de votre profil LinkedIn (ex : Expérience, Formation, compétences, résumé)..."
+                  placeholder="Collez ici les sections de votre profil LinkedIn (ex : Expérience, Formation, compétences, résumé) ou cliquez sur 'Préremplir un texte d'exemple' ci-dessus..."
                   disabled={isParsing}
                   className="w-full h-44 bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all font-mono leading-relaxed"
                 />
