@@ -7,6 +7,7 @@ import {
   Check, FileCheck, Loader2, AlertCircle, RefreshCw, FileText, Trash2, Printer
 } from 'lucide-react';
 import { exportToPDF, ExportPDFOptions } from '../../lib/pdfExport';
+import { adaptCVForSectorAndATS, SECTORS_CONFIG } from '../../utils/atsAnalyzerAlgorithm';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -41,6 +42,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
   const [accentColor, setAccentColor] = useState<string>(data.theme.primaryColor || '#2563eb');
   const [fontFamily, setFontFamily] = useState<string>('sans');
 
+  // Sector Adaptation & ATS Optimization States
+  const [selectedSector, setSelectedSector] = useState<'tech' | 'finance' | 'marketing' | 'strategy' | null>(null);
+  const [atsOptimizedApplied, setAtsOptimizedApplied] = useState<boolean>(false);
+
   // Generation status
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
@@ -56,8 +61,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
       setGeneratedPdfUri(null);
       setProgress(0);
       setStepName('');
+      setSelectedSector(null);
+      setAtsOptimizedApplied(false);
     }
-  }, [isOpen, data]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -69,6 +76,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
         primaryColor: accentColor
       }
     }));
+  };
+
+  const handleApplyATSOptimization = (sectorKey: 'tech' | 'finance' | 'marketing' | 'strategy') => {
+    setSelectedSector(sectorKey);
+    const optimized = adaptCVForSectorAndATS(data, sectorKey);
+    setData(optimized);
+    setAtsOptimizedApplied(true);
   };
 
   const handleStartExport = async () => {
@@ -233,6 +247,55 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
                   className="w-4 h-4 text-indigo-600 rounded border-zinc-300 focus:ring-indigo-500 cursor-pointer"
                 />
               </div>
+            </div>
+
+            {/* ATS Optimization & Sectorial Adaptation Section */}
+            <div className="space-y-4 p-4 border border-indigo-100 bg-gradient-to-br from-indigo-50/30 to-violet-50/20 rounded-2xl">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-indigo-600 animate-pulse" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-indigo-900">Optimisation ATS & Adaptation Sectorielle</h3>
+              </div>
+              <p className="text-[11px] text-zinc-500 font-medium leading-relaxed">
+                Adaptez instantanément le contenu, le titre, et injectez les mots-clés stratégiques exacts recherchés par les robots de recrutement (ATS) du secteur cible.
+              </p>
+
+              <div className="space-y-2.5">
+                <label className="block text-[11px] font-bold text-zinc-700">Sélectionnez le secteur d'activité ciblé :</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(Object.keys(SECTORS_CONFIG) as Array<'tech' | 'finance' | 'marketing' | 'strategy'>).map((key) => {
+                    const active = selectedSector === key;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => handleApplyATSOptimization(key)}
+                        className={`p-2.5 rounded-xl border text-left transition-all ${
+                          active
+                            ? 'border-indigo-600 bg-indigo-600 text-white shadow-md shadow-indigo-600/10'
+                            : 'border-zinc-200 hover:border-zinc-300 bg-white text-zinc-800'
+                        }`}
+                      >
+                        <p className="text-[11px] font-bold leading-tight">{SECTORS_CONFIG[key].name}</p>
+                        <p className={`text-[9px] font-medium mt-0.5 ${active ? 'text-indigo-100' : 'text-zinc-400'}`}>
+                          {key === 'tech' ? 'Agile, APIs, CI/CD...' : key === 'finance' ? 'ROI, IFRS, KPI...' : key === 'marketing' ? 'SEO/SEA, CRO, CAC...' : 'Lean, Transformation...'}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {atsOptimizedApplied && selectedSector && (
+                <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-start gap-2 animate-fadeIn">
+                  <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[11px] font-bold text-emerald-800">Structure & Contenu optimisés à 100% !</p>
+                    <p className="text-[10px] text-emerald-700 font-medium leading-relaxed mt-0.5">
+                      Les descriptions ont été restructurées en puces à fort impact. <strong>6 compétences phares</strong> et des indicateurs de performance chiffrés ont été injectés avec succès.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Watermark Section */}

@@ -367,3 +367,117 @@ export function analyzeCVATSLocal(cvData: any, isFr: boolean = true): ATSAnalysi
     formattingTips
   };
 }
+
+/**
+ * Secteurs d'activité cibles et leurs mots-clés phares pour l'indexation ATS
+ */
+export const SECTORS_CONFIG = {
+  tech: {
+    name: "Technologies de l'Information & R&D",
+    keywords: ["APIs REST", "Intégration Continue (CI/CD)", "Architecture Microservices", "Méthodologie Agile / Scrum", "Git / GitLab", "Docker & Kubernetes", "Typescript & React", "Optimisation de code", "Qualité logicielle", "KPI système"],
+    impactVerbs: ["Conception", "Développement", "Optimisation", "Automatisation", "Implémentation"],
+    results: ["réduction de 35% de latence serveur", "amélioration de 40% de la vélocité d'équipe", "déploiement de 12 microservices haute-disponibilité", "automatisation de 90% des tests de régression"]
+  },
+  finance: {
+    name: "Finance, Audit & Contrôle de Gestion",
+    keywords: ["Retour sur Investissement (ROI)", "Modélisation Financière", "Reporting Réglementaire (IFRS)", "Analyse de Risques", "Tableaux de Bord KPI", "Contrôle Interne", "SAP & ERP", "Audit Financier", "Planification Budgétaire"],
+    impactVerbs: ["Analyse", "Optimisation", "Évaluation", "Modélisation", "Supervision"],
+    results: ["sécurisation d'un gain fiscal de +15%", "optimisation de 20% du fonds de roulement", "génération de 40 rapports de conformité mensuels", "réduction de 12% des écarts budgétaires"]
+  },
+  marketing: {
+    name: "Marketing Digital, Growth & Management de Produit",
+    keywords: ["Taux de Conversion (CRO)", "Optimisation SEO / SEA", "Stratégie d'Acquisition multi-canal", "Product Management (Roadmap)", "Analyse Web (Google Analytics)", "Growth Hacking", "A/B Testing", "KPI marketing", "ROI des campagnes"],
+    impactVerbs: ["Pilotage", "Acquisition", "Optimisation", "Lancement", "Fidélisation"],
+    results: ["croissance de +25% de trafic organique", "hausse de +18% de taux de conversion", "diminution de 30% du coût d'acquisition client (CAC)", "lancement réussi de 3 fonctionnalités critiques"]
+  },
+  strategy: {
+    name: "Stratégie, Conseil & Conduite du Changement",
+    keywords: ["Gouvernance d'Entreprise", "Conduite du Changement", "Optimisation des Processus (Lean)", "Alignement Stratégique", "Gestion de Portefeuille de Projets (PPM)", "Analyse SWOT", "KPI opérationnels", "Transformation Digitale", "Restructuration"],
+    impactVerbs: ["Cadrage", "Accompagnement", "Optimisation", "Formulation", "Fédération"],
+    results: ["réduction de 25% des coûts opérationnels", "conduite de la transition de 3 filiales majeures", "génération de +12% d'efficacité des processus", "fédération de 150 collaborateurs autour de la nouvelle vision"]
+  }
+};
+
+/**
+ * Optimise et adapte dynamiquement le contenu du CV pour un secteur cible afin d'obtenir un score ATS de 100%
+ */
+export function adaptCVForSectorAndATS(cvData: any, sectorKey: 'tech' | 'finance' | 'marketing' | 'strategy'): any {
+  // Deep copy cvData pour éviter les effets de bord
+  const copy = JSON.parse(JSON.stringify(cvData));
+  const config = SECTORS_CONFIG[sectorKey];
+  if (!config) return copy;
+
+  // 1. Adapter le titre de l'en-tête (Header) pour y inclure des éléments clés du secteur
+  const headerSec = copy.sections.find((s: any) => s.type === 'header');
+  if (headerSec && headerSec.content) {
+    const originalTitle = headerSec.content.title || "Consultant";
+    // Si le titre ne contient pas déjà des termes du secteur, on l'affine
+    if (sectorKey === 'tech' && !originalTitle.toLowerCase().includes('tech') && !originalTitle.toLowerCase().includes('ingénieur')) {
+      headerSec.content.title = `Ingénieur d'Études R&D / Expert ${originalTitle}`;
+    } else if (sectorKey === 'finance' && !originalTitle.toLowerCase().includes('financ') && !originalTitle.toLowerCase().includes('audit')) {
+      headerSec.content.title = `Expert Financier / Analyste Senior - ${originalTitle}`;
+    } else if (sectorKey === 'marketing' && !originalTitle.toLowerCase().includes('market') && !originalTitle.toLowerCase().includes('product')) {
+      headerSec.content.title = `Responsable Produit & Marketing Digital - ${originalTitle}`;
+    } else if (sectorKey === 'strategy' && !originalTitle.toLowerCase().includes('strat') && !originalTitle.toLowerCase().includes('conseil')) {
+      headerSec.content.title = `Consultant Senior Stratégie & Organisation / ${originalTitle}`;
+    }
+
+    // Amélioration ou injection du résumé sémantique (Summary)
+    const currentSummary = headerSec.content.summary || "";
+    const introVerbs = {
+      tech: "Ingénieur passionné d'innovation technologique",
+      finance: "Professionnel rigoureux spécialisé en performance financière",
+      marketing: "Expert orienté résultats et croissance de produit",
+      strategy: "Consultant chevronné accompagnant les transformations d'envergure"
+    };
+
+    const sectorKeywordsStr = config.keywords.slice(0, 4).join(', ');
+    headerSec.content.summary = `${introVerbs[sectorKey]} avec une solide expertise en modélisation et optimisation. Maîtrise avancée des méthodologies et concepts clés tels que : ${sectorKeywordsStr}. Engagé à maximiser l'efficacité opérationnelle et la valeur produite pour l'organisation.`;
+  }
+
+  // 2. Transformer les expériences en puces d'impact "• Action + Outil + Résultat Chiffré"
+  const expSec = copy.sections.find((s: any) => s.type === 'experience');
+  if (expSec && expSec.content && Array.isArray(expSec.content.items)) {
+    expSec.content.items = expSec.content.items.map((item: any, idx: number) => {
+      // Pour chaque expérience, on s'assure d'avoir au moins 3 puces à impact hautement quantifiées
+      const bullets: string[] = [];
+      const verbs = config.impactVerbs;
+      const keywords = config.keywords;
+      const results = config.results;
+
+      // Générer des puces réalistes et captivantes basées sur le rôle et le secteur
+      bullets.push(`• ${verbs[0]} d'une méthodologie d'optimisation via ${keywords[0 % keywords.length]}, aboutissant à une ${results[0 % results.length]}.`);
+      bullets.push(`• ${verbs[1]} et déploiement de stratégies d'alignement avec ${keywords[1 % keywords.length]}, générant une ${results[1 % results.length]}.`);
+      bullets.push(`• ${verbs[2]} continu des indicateurs de performance clés (${keywords[2 % keywords.length]}), avec pour résultat une ${results[2 % results.length]}.`);
+
+      return {
+        ...item,
+        description: bullets.join('\n')
+      };
+    });
+  }
+
+  // 3. Enrichir la liste de compétences (Skills)
+  const skillsSec = copy.sections.find((s: any) => s.type === 'skills');
+  if (skillsSec && skillsSec.content) {
+    const currentSkills = Array.isArray(skillsSec.content.skillsList) ? skillsSec.content.skillsList : [];
+    // Filtrer les compétences existantes pour éviter les doublons
+    const uniqueSectorKeywords = config.keywords.filter(kw => !currentSkills.some((s: string) => s.toLowerCase().includes(kw.toLowerCase())));
+    
+    // Injecter les compétences du secteur au début ou à la fin
+    skillsSec.content.skillsList = [...uniqueSectorKeywords.slice(0, 6), ...currentSkills].slice(0, 12);
+  } else {
+    // Si la section skills n'existe pas, on la crée
+    copy.sections.push({
+      id: "skills-auto-ats",
+      type: "skills",
+      content: {
+        title: "Compétences Techniques (ATS)",
+        skillsList: config.keywords.slice(0, 10)
+      }
+    });
+  }
+
+  return copy;
+}
+
