@@ -740,15 +740,18 @@ Règles de diagnostic :
     const adzunaKey = process.env.ADZUNA_APP_KEY;
     const joobleKey = process.env.JOOBLE_API_KEY;
 
+    const adzunaSupportedCountries = ['gb', 'us', 'de', 'fr', 'au', 'nz', 'ca', 'in', 'pl', 'br', 'at', 'za'];
+    const countryCode = (country || 'MA').toLowerCase();
+    const isAdzunaSupported = adzunaSupportedCountries.includes(countryCode);
+
     let adzunaResults: any[] = [];
     let joobleResults: any[] = [];
     let glassdoorResults: any[] = [];
 
-    // 1. Fetch from Adzuna (if configured)
-    if (adzunaId && adzunaKey) {
+    // 1. Fetch from Adzuna (if configured & country is supported)
+    if (adzunaId && adzunaKey && isAdzunaSupported) {
       try {
         console.log(`[Adzuna API] Fetching jobs for keywords: "${keywords}" in "${location}"`);
-        const countryCode = (country || 'MA').toLowerCase();
         const response = await fetch(
           `https://api.adzuna.com/v1/api/jobs/${countryCode}/search/1?app_id=${adzunaId}&app_key=${adzunaKey}&what=${encodeURIComponent(keywords)}&where=${encodeURIComponent(location)}&content-type=application/json`
         );
@@ -778,6 +781,8 @@ Règles de diagnostic :
       } catch (err) {
         console.error("[Adzuna API Error]:", err);
       }
+    } else if (adzunaId && adzunaKey && !isAdzunaSupported) {
+      console.log(`[Adzuna API] Skipped: country "${countryCode}" is not supported by Adzuna API. Falling back to simulation.`);
     }
 
     // 2. Fetch from Jooble (if configured)
@@ -822,9 +827,9 @@ Règles de diagnostic :
 
     // 3. Fallback / Hybrid generation using Gemini (always generated for Glassdoor OR if keys are missing)
     // This guarantees high-quality, fully responsive search results from Adzuna, Jooble, and Glassdoor in French.
-    const hasKeys = (adzunaId && adzunaKey) || joobleKey;
+    const hasKeys = (adzunaId && adzunaKey && isAdzunaSupported) || joobleKey;
     const sourcesToGenerate = ["Glassdoor"];
-    if (!adzunaId || !adzunaKey) sourcesToGenerate.push("Adzuna");
+    if (!adzunaId || !adzunaKey || !isAdzunaSupported) sourcesToGenerate.push("Adzuna");
     if (!joobleKey) sourcesToGenerate.push("Jooble");
 
     try {
