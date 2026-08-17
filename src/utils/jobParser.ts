@@ -57,32 +57,25 @@ Ton rôle est de recevoir du texte brut ou du HTML d'annonces d'emploi et de le 
 `;
 
 /**
- * Extrait et structure un texte brut d'offre d'emploi via Phi-3.5-Mini (Ollama)
+ * Extrait et structure un texte brut d'offre d'emploi via le proxy serveur (Ollama / Phi-3.5 ou Gemini en secours)
  */
-export async function parseRawJobText(rawText: string, endpointUrl = 'http://localhost:11434/api/generate'): Promise<JobOffer[]> {
+export async function parseRawJobText(rawText: string, endpointUrl = '/api/jobs/parse'): Promise<JobOffer[]> {
   try {
     const response = await fetch(endpointUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'phi3.5:mini',
-        prompt: `${SYSTEM_PROMPT}\n\nTEXTE A PARSER :\n${rawText}`,
-        format: 'json',
-        stream: false,
-        options: {
-          temperature: 0.0,
-          top_p: 0.5,
-        },
+        rawText,
+        ollamaUrl: 'http://localhost:11434/api/generate' // Permet au serveur de tenter l'Ollama local de l'utilisateur si disponible
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Erreur Ollama: ${response.statusText}`);
+      throw new Error(`Erreur de parsing: ${response.statusText}`);
     }
 
     const data = await response.json();
-    const parsedJobs: JobOffer[] = JSON.parse(data.response);
-    return parsedJobs;
+    return data as JobOffer[];
   } catch (error) {
     console.error('[ResumeFlow JobParser Error]:', error);
     return [];

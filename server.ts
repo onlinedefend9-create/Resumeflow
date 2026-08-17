@@ -29,11 +29,13 @@ function getGeminiClient(): GoogleGenAI {
 
 // Robust wrapper to handle temporary model unavailability (e.g. 503 high demand) with retries and fallback models
 async function generateContentWithRetryAndFallback(params: any) {
-  const modelsToTry = [
+  const modelsToTry = Array.from(new Set([
     params.model, // Primary model requested
-    'gemini-flash-latest',
-    'gemini-3.1-flash-lite'
-  ].filter(Boolean);
+    'gemini-2.5-flash',
+    'gemini-2.5-pro',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
+  ].filter(Boolean)));
 
   let lastError: any = null;
 
@@ -146,6 +148,11 @@ async function startServer() {
 
   // Serve JSON parsing middleware
   app.use(express.json());
+
+  // API Route for health check
+  app.get('/api/health', (req, res) => {
+    res.json({ status: "ok" });
+  });
 
   // API Route for Supabase OAuth URL
   app.get('/api/auth/supabase/url', (req, res) => {
@@ -956,6 +963,126 @@ Le format de sortie attendu est un tableau d'objets JSON STRICT avec la structur
         results: staticFallback,
         apisUsed: { adzuna: false, jooble: false, glassdoorSimulated: true, failedover: true }
       });
+    }
+  });
+
+  // API to parse raw job text with Phi (Ollama) or fallback to Gemini
+  app.post('/api/jobs/parse', async (req, res) => {
+    const { rawText, ollamaUrl = 'http://localhost:11434/api/generate' } = req.body;
+
+    if (!rawText) {
+      return res.status(400).json({ error: "Le texte brut de l'offre est manquant." });
+    }
+
+    const SYSTEM_PROMPT = `
+Tu es le moteur d'ingestion et de structuration de données pour la plateforme ResumeFlow.
+Ton rôle est de recevoir du texte brut ou du HTML d'annonces d'emploi et de le transformer en un tableau JSON STRICT, prêt à être inséré directement dans la base de données Supabase.
+
+1. RÈGLES DE SORTIE (FORMAT STRICT)
+- Tu dois répondre UNIQUEMENT avec un tableau JSON valide (Array of Objects).
+- Ne rajoute AUCUN texte explicatif, ni introduction, ni conclusion.
+- N'utilise PAS de balises Markdown. La réponse doit être du JSON brut.
+
+2. SCHÉMA DU JSON ATTENDU
+[
+  {
+    "title": "Titre du poste (string)",
+    "company": "Nom de l'entreprise (string, ou 'Confidentiel' si absent)",
+    "country": "Code ISO à 2 lettres (ex: 'MA', 'FR', 'US')",
+    "region": "Nom exact de la région administrative (ex: 'Casablanca-Settat', 'Rabat-Salé-Kénitra', 'Fès-Meknès', 'Tanger-Tétouan-Al Hoceïma', 'Marrakech-Safi', 'Île-de-France')",
+    "city": "Nom de la ville principale (ex: 'Casablanca', 'Rabat', 'Fès', 'Paris')",
+    "contract_type": "Type de contrat ('CDI', 'CDD', 'Freelance', 'Stage', 'Remote')",
+    "experience_level": "Niveau requis ('Junior', 'Mid', 'Senior', 'Lead')",
+    "skills": ["Array", "de", "skills", "normalisés"],
+    "description": "Résumé propre du poste en 2 à 3 phrases maximum (string)",
+    "is_remote": true/false (boolean)
+  }
+]
+
+3. RÈGLES DE NORMALISATION ET MAPPING DÉTERMINISTE
+- GÉOLOCALISATION :
+  - Casablanca, Mohammedia, Settat -> Region: "Casablanca-Settat", Country: "MA"
+  - Rabat, Salé, Kénitra -> Region: "Rabat-Salé-Kénitra", Country: "MA"
+  - Fès, Meknès -> Region: "Fès-Meknès", Country: "MA"
+  - Tanger, Tétouan -> Region: "Tanger-Tétouan-Al Hoceïma", Country: "MA"
+  - Marrakech -> Region: "Marrakech-Safi", Country: "MA"
+  - Paris, Boulogne, Saint-Denis -> Region: "Île-de-France", Country: "FR"
+- COMPÉTENCES : Harmonise les noms (ex: "React.js" -> "React", "Node" -> "Node.js", "TS" -> "TypeScript").
+- NETTOYAGE : Supprime les caractères spéciaux et les numéros de téléphone.
+`;
+
+    // 1. Try local Ollama (Phi-3.5)
+    try {
+      console.log(`[JobParser] Attempting parsing via Ollama at ${ollamaUrl}...`);
+      const response = await fetch(ollamaUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'phi3.5:mini',
+          prompt: `${SYSTEM_PROMPT}\n\nTEXTE A PARSER :\n${rawText}`,
+          format: 'json',
+          stream: false,
+          options: {
+            temperature: 0.0,
+            top_p: 0.5,
+          },
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const parsedJobs = JSON.parse(data.response);
+        console.log("[JobParser] Successfully parsed using Ollama (Phi-3.5)!");
+        return res.json(parsedJobs);
+      }
+      console.log(`[JobParser] Ollama returned status ${response.status}. Switching to Gemini...`);
+    } catch (ollamaErr) {
+      console.log("[JobParser] Ollama not available locally or timed out. Switching to Gemini...");
+    }
+
+    // 2. Fallback to Gemini
+    try {
+      console.log("[JobParser] Parsing via Gemini...");
+      const response = await generateContentWithRetryAndFallback({
+        model: 'gemini-3.5-flash',
+        contents: [
+          `TEXTE A PARSER :\n${rawText}`
+        ],
+        config: {
+          systemInstruction: SYSTEM_PROMPT,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                title: { type: Type.STRING },
+                company: { type: Type.STRING },
+                country: { type: Type.STRING },
+                region: { type: Type.STRING },
+                city: { type: Type.STRING },
+                contract_type: { type: Type.STRING },
+                experience_level: { type: Type.STRING },
+                skills: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING }
+                },
+                description: { type: Type.STRING },
+                is_remote: { type: Type.BOOLEAN }
+              },
+              required: ["title", "company", "country", "region", "city", "contract_type", "experience_level", "skills", "description", "is_remote"]
+            }
+          }
+        }
+      });
+
+      const text = extractResponseText(response);
+      const parsedJobs = JSON.parse(text);
+      console.log("[JobParser] Successfully parsed using Gemini!");
+      return res.json(parsedJobs);
+    } catch (geminiErr: any) {
+      console.error("[JobParser] Failed to parse using Gemini fallback:", geminiErr);
+      return res.status(500).json({ error: "L'analyse par l'IA a échoué : " + (geminiErr.message || geminiErr) });
     }
   });
 

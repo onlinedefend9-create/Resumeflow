@@ -52,6 +52,7 @@ export const Jobs: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [selectedRegion, setSelectedRegion] = useState('');
   const [selectedContract, setSelectedContract] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState<string>('ALL');
   const [showImporter, setShowImporter] = useState(false);
   const [rawText, setRawText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -198,7 +199,7 @@ export const Jobs: React.FC = () => {
     }
   };
 
-  // Filtrage côté client sur le titre, l'entreprise et les compétences
+  // Filtrage côté client sur le titre, l'entreprise, les compétences et le pays
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch = 
       job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -207,7 +208,17 @@ export const Jobs: React.FC = () => {
     
     const matchesContract = selectedContract ? job.contract_type === selectedContract : true;
     
-    return matchesSearch && matchesContract;
+    const jobCountry = (job.country || 'MA').toUpperCase();
+    let matchesCountry = true;
+    if (selectedCountry === 'ALL') {
+      matchesCountry = true;
+    } else if (selectedCountry === 'INTL') {
+      matchesCountry = jobCountry !== 'MA';
+    } else {
+      matchesCountry = jobCountry === selectedCountry;
+    }
+    
+    return matchesSearch && matchesContract && matchesCountry;
   });
 
   const filteredExternalJobs = externalJobs.filter(job => {
@@ -456,6 +467,53 @@ export const Jobs: React.FC = () => {
                   </select>
                 </div>
               </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 mb-6">
+              <button
+                onClick={() => setSelectedCountry('ALL')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  selectedCountry === 'ALL' ? 'bg-indigo-600 text-white' : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                🌍 Tous les pays
+              </button>
+
+              <button
+                onClick={() => setSelectedCountry('MA')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  selectedCountry === 'MA' ? 'bg-indigo-600 text-white' : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                🇲🇦 Maroc
+              </button>
+
+              <button
+                onClick={() => setSelectedCountry('FR')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  selectedCountry === 'FR' ? 'bg-indigo-600 text-white' : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                🇫🇷 France
+              </button>
+
+              <button
+                onClick={() => setSelectedCountry('CA')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  selectedCountry === 'CA' ? 'bg-indigo-600 text-white' : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                🇨🇦 Canada
+              </button>
+
+              <button
+                onClick={() => setSelectedCountry('INTL')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  selectedCountry === 'INTL' ? 'bg-indigo-600 text-white' : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                ✈️ Hors Maroc (International)
+              </button>
             </div>
 
             {/* Grille des offres locales */}
