@@ -1,13 +1,49 @@
-import { Link } from 'react-router-dom';
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { SEO } from '../components/SEO';
 import { AdSlot } from '../components/AdSlot';
-import { Sparkles, Zap, ShieldCheck, Download, ArrowRight, CheckCircle2, Star, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { Sparkles, Zap, ShieldCheck, Download, ArrowRight, CheckCircle2, Star, ChevronDown, Briefcase, MapPin, Building2, Search } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
+import { supabase } from '../lib/supabase';
+import { JobOffer } from '../utils/jobParser';
 
 export const Home = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const [homeSearchTerm, setHomeSearchTerm] = useState('');
+  const [recentJobs, setRecentJobs] = useState<JobOffer[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRecentJobs = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('jobs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(3);
+        if (!error && data) {
+          setRecentJobs(data as JobOffer[]);
+        }
+      } catch (err) {
+        console.error('Error fetching recent jobs:', err);
+      } finally {
+        setJobsLoading(false);
+      }
+    };
+    fetchRecentJobs();
+  }, []);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (homeSearchTerm.trim()) {
+      navigate(`/jobs?search=${encodeURIComponent(homeSearchTerm.trim())}`);
+    } else {
+      navigate('/jobs');
+    }
+  };
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -43,6 +79,30 @@ export const Home = () => {
           <p className="text-base sm:text-lg md:text-xl text-zinc-600 max-w-2xl mx-auto font-normal leading-relaxed">
             {t.hero.subtitle}
           </p>
+
+          {/* Main Job Search Ingestion Bar */}
+          <form onSubmit={handleSearchSubmit} className="max-w-xl mx-auto pt-2 pb-2">
+            <div className="relative flex items-center bg-white border border-zinc-200/80 rounded-2xl p-1.5 shadow-md focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+              <Search className="absolute left-4 h-5 w-5 text-zinc-400" />
+              <input
+                type="text"
+                placeholder="Quel métier ou entreprise recherchez-vous ?"
+                value={homeSearchTerm}
+                onChange={(e) => setHomeSearchTerm(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 bg-transparent text-[#0a0a0a] text-sm focus:outline-none placeholder-zinc-400"
+              />
+              <button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-6 py-3 rounded-xl transition flex items-center gap-2 whitespace-nowrap"
+              >
+                <Briefcase className="w-4 h-4" />
+                Trouver un Job
+              </button>
+            </div>
+            <p className="text-xs text-zinc-500 mt-2 text-center">
+              Recherchez des postes en CDI, CDD, Freelance ou Stage et adaptez votre CV instantanément.
+            </p>
+          </form>
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
@@ -107,6 +167,95 @@ export const Home = () => {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Latest Jobs Section */}
+      <section className="py-16 max-w-7xl mx-auto px-6 md:px-10">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold mb-3">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Opportunités du moment</span>
+            </div>
+            <h2 className="text-3xl font-extrabold text-[#0a0a0a]">
+              Offres d'emploi récentes à la une
+            </h2>
+            <p className="text-zinc-600 mt-1">
+              Postulez directement et optimisez votre CV avec notre assistant intelligent pour chaque offre.
+            </p>
+          </div>
+          <Link
+            to="/jobs"
+            className="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 group whitespace-nowrap"
+          >
+            Voir toutes les offres <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        </div>
+
+        {jobsLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="animate-pulse bg-zinc-50 border border-zinc-200 rounded-xl p-6 h-56" />
+            ))}
+          </div>
+        ) : recentJobs.length === 0 ? (
+          <div className="text-center py-12 border border-dashed border-zinc-200 rounded-2xl bg-zinc-50/40">
+            <Briefcase className="w-8 h-8 text-zinc-400 mx-auto mb-3" />
+            <p className="text-zinc-600 text-sm font-medium mb-1">Aucune offre n'est encore publiée.</p>
+            <p className="text-zinc-500 text-xs mb-4">Utilisez l'importateur intelligent pour ajouter la première annonce.</p>
+            <Link
+              to="/jobs"
+              className="inline-flex items-center gap-2 bg-[#0a0a0a] hover:bg-zinc-950 text-white text-xs font-semibold px-4 py-2 rounded-lg transition"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              Importer la première offre
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {recentJobs.map((job, index) => (
+              <div
+                key={index}
+                className="bg-white border border-zinc-200 hover:border-zinc-300 hover:shadow-md transition-all rounded-xl p-6 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <span className="inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-50 text-blue-600">
+                      {job.contract_type}
+                    </span>
+                    {job.is_remote && (
+                      <span className="inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-600">
+                        Remote
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 className="text-base font-bold text-zinc-900 mb-1 line-clamp-1">{job.title}</h3>
+                  
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-500 mb-2">
+                    <Building2 className="w-3.5 h-3.5" />
+                    <span>{job.company}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-400 mb-4">
+                    <MapPin className="w-3.5 h-3.5" />
+                    <span>{job.city}, {job.region} ({job.country})</span>
+                  </div>
+
+                  <p className="text-xs text-zinc-600 line-clamp-3 mb-4">{job.description}</p>
+                </div>
+
+                <Link
+                  to="/jobs"
+                  className="w-full flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold py-2.5 rounded-lg transition"
+                >
+                  <Briefcase className="w-3.5 h-3.5" />
+                  Adapter mon CV
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Benefits Section */}

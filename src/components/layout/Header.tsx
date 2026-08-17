@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Sparkles, Menu, X, LayoutTemplate, BookOpen, CreditCard, MapPin, LogOut, Cloud, User } from 'lucide-react';
+import { Sparkles, Menu, X, LayoutTemplate, BookOpen, CreditCard, MapPin, LogOut, Cloud, User, Briefcase } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { LanguageSelector } from '../LanguageSelector';
@@ -48,6 +48,9 @@ export const Header = () => {
           </Link>
           <Link to="/pricing" className="text-sm font-medium text-zinc-600 hover:text-[#0a0a0a] transition-colors">
             {t.nav.pricing}
+          </Link>
+          <Link to="/jobs" className="text-sm font-medium text-zinc-600 hover:text-[#0a0a0a] transition-colors">
+            {t.nav.jobs}
           </Link>
           <Link to="/sitemap" className="text-sm font-medium text-zinc-600 hover:text-[#0a0a0a] transition-colors">
             {t.nav.sitemap}
@@ -149,6 +152,13 @@ export const Header = () => {
             >
               <CreditCard className="w-4 h-4 text-emerald-600" />
               <span>{t.nav.pricing}</span>
+            </Link>
+            <Link
+              to="/jobs"
+              className="flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-100 text-zinc-800 font-semibold text-sm transition-colors"
+            >
+              <Briefcase className="w-4 h-4 text-indigo-600" />
+              <span>{t.nav.jobs}</span>
             </Link>
             <Link
               to="/sitemap"

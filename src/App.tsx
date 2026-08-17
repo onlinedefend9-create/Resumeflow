@@ -15,6 +15,7 @@ import { Pricing } from './pages/Pricing';
 import { Blog } from './pages/Blog';
 import { BlogPostDetail } from './pages/BlogPostDetail';
 import { SitemapPage } from './pages/SitemapPage';
+import { Jobs } from './pages/Jobs';
 import { Privacy } from './pages/Privacy';
 import { Login } from './pages/Login';
 import { AuthCallback } from './pages/AuthCallback';
@@ -47,6 +48,7 @@ export default function App() {
                     <Route path="/blog" element={<Blog />} />
                     <Route path="/blog/:slug" element={<BlogPostDetail />} />
                     <Route path="/sitemap" element={<SitemapPage />} />
+                    <Route path="/jobs" element={<Jobs />} />
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/auth/callback" element={<AuthCallback />} />

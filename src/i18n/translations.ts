@@ -7,6 +7,7 @@ export interface TranslationSchema {
     pricing: string;
     createCv: string;
     sitemap: string;
+    jobs: string;
   };
   hero: {
     badge: string;
@@ -164,6 +165,7 @@ export const translations: Record<Language, TranslationSchema> = {
       pricing: 'Tarifs',
       createCv: 'Créer mon CV',
       sitemap: 'Plan du site',
+      jobs: 'Offres',
     },
     hero: {
       badge: 'Nouveau : Éditeur international 2026',
@@ -391,6 +393,7 @@ export const translations: Record<Language, TranslationSchema> = {
       pricing: 'Pricing',
       createCv: 'Create My Resume',
       sitemap: 'Sitemap',
+      jobs: 'Jobs',
     },
     hero: {
       badge: 'New: International Editor 2026',
@@ -618,6 +621,7 @@ export const translations: Record<Language, TranslationSchema> = {
       pricing: 'Precios',
       createCv: 'Crear mi CV',
       sitemap: 'Mapa del sitio',
+      jobs: 'Empleos',
     },
     hero: {
       badge: 'Nuevo: Editor internacional 2026',
@@ -845,6 +849,7 @@ export const translations: Record<Language, TranslationSchema> = {
       pricing: 'Preise',
       createCv: 'Lebenslauf erstellen',
       sitemap: 'Sitemap',
+      jobs: 'Jobs',
     },
     hero: {
       badge: 'Neu: Internationaler Editor 2026',
