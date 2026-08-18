@@ -271,85 +271,62 @@ export const Jobs: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 pb-16">
-      {/* Hero Header Area */}
-      <div className="bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 py-10 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-xs font-semibold mb-3">
-                <Briefcase className="w-3.5 h-3.5" />
-                <span>Espace Emploi Multi-Source & Intelligence Artificielle</span>
-              </div>
-              <h1 className="text-3xl font-extrabold text-[#0a0a0a] dark:text-white tracking-tight">
-                Offres d'Emploi & Stages
-              </h1>
-              <p className="text-zinc-600 dark:text-zinc-400 mt-1 max-w-xl text-sm leading-relaxed">
-                Explorez les opportunités de carrière les plus recherchées au Maroc et à l'international depuis notre base ou en direct d'Adzuna, Jooble, et Glassdoor.
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => {
-                  setShowImporter(!showImporter);
-                  setIngestSuccess(false);
-                }}
-                className="flex items-center gap-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer"
-              >
-                <Sparkles className="w-4 h-4 text-indigo-500" />
-                <span>Analyseur IA de Texte</span>
-              </button>
-              <button
-                onClick={() => setActiveTab(activeTab === 'local' ? 'external' : 'local')}
-                className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-md text-xs transition-all cursor-pointer"
-              >
-                <Globe className="w-4 h-4 text-indigo-200" />
-                <span>{activeTab === 'local' ? "Rechercher en Direct (APIs)" : "Voir nos Offres Locales"}</span>
-              </button>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        {/* Simple & Clean Header */}
+        <div className="mb-8 border-b border-zinc-100 pb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-[#0a0a0a] dark:text-white tracking-tight">
+              Offres d'Emploi & Stages
+            </h1>
+            <p className="text-zinc-500 text-xs md:text-sm mt-1 font-medium">
+              Découvrez des milliers d'opportunités de carrière qualifiées en temps réel.
+            </p>
+          </div>
+        </div>
+
+        {/* Toggle Onglets de Navigation Compacts et Alignés */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-200 dark:border-zinc-800 mb-8 gap-4">
+          <div className="flex flex-wrap gap-1">
+            <button
+              onClick={() => setActiveTab('local')}
+              className={`py-3 px-5 font-bold text-xs border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+                activeTab === 'local' 
+                  ? 'border-[#0a0a0a] text-[#0a0a0a] dark:border-white dark:text-white' 
+                  : 'border-transparent text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              <span>Base de données</span>
+              <span className="bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 px-1.5 py-0.5 rounded-md text-[10px] font-bold">
+                {stats.total}
+              </span>
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('external')}
+              className={`py-3 px-5 font-bold text-xs border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+                activeTab === 'external' 
+                  ? 'border-[#0a0a0a] text-[#0a0a0a] dark:border-white dark:text-white' 
+                  : 'border-transparent text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>Moteur Multi-Source (Live APIs)</span>
+            </button>
           </div>
 
-          {/* Premium Market Stats Dashboard */}
-          <StatsDashboard 
-            totalJobsCount={stats.total} 
-            remoteJobsCount={stats.remote} 
-            regionsCount={stats.regions} 
-          />
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        {/* Toggle Onglets de Navigation */}
-        <div className="flex border-b border-zinc-200 dark:border-zinc-800 mb-8">
-          <button
-            onClick={() => setActiveTab('local')}
-            className={`py-3 px-6 font-bold text-sm border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
-              activeTab === 'local' 
-                ? 'border-indigo-600 text-indigo-600' 
-                : 'border-transparent text-zinc-500 hover:text-zinc-800'
-            }`}
-          >
-            <Building2 className="w-4 h-4" />
-            <span>Base de données ResumeFlow</span>
-            <span className="bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 px-2 py-0.5 rounded-full text-xs font-semibold">
-              {stats.total}
-            </span>
-          </button>
-          
-          <button
-            onClick={() => setActiveTab('external')}
-            className={`py-3 px-6 font-bold text-sm border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
-              activeTab === 'external' 
-                ? 'border-indigo-600 text-indigo-600' 
-                : 'border-transparent text-zinc-500 hover:text-zinc-800'
-            }`}
-          >
-            <Globe className="w-4 h-4" />
-            <span>Moteur Multi-Source (Adzuna, Jooble, Glassdoor)</span>
-            <span className="bg-gradient-to-r from-amber-500 to-indigo-500 text-white px-2 py-0.5 rounded-full text-[10px] font-extrabold tracking-wide uppercase">
-              LIVE API
-            </span>
-          </button>
+          <div className="flex items-center pb-2 sm:pb-0">
+            <button
+              onClick={() => {
+                setShowImporter(!showImporter);
+                setIngestSuccess(false);
+              }}
+              className="inline-flex items-center gap-2 bg-[#0a0a0a] hover:bg-zinc-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Analyseur IA de Texte</span>
+            </button>
+          </div>
         </div>
 
         {/* Zone d'importation IA */}
