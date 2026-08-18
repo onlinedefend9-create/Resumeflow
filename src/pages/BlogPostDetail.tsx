@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { SEO } from '../components/SEO';
 import { AdSlot } from '../components/AdSlot';
+import { NewsletterSubscription } from '../components/blog/NewsletterSubscription';
 import { ArrowLeft, Clock, Calendar, Sparkles } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 
@@ -39,6 +40,8 @@ export const BlogPostDetail = () => {
       <div className="prose prose-zinc max-w-none space-y-6 text-sm text-zinc-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: post.content || '' }} />
 
       <AdSlot />
+
+      <NewsletterSubscription articleSlug={slug} articleTitle={post.title} />
 
       <div className="p-8 rounded-2xl bg-[#0a0a0a] text-white text-center space-y-4">
         <h3 className="text-2xl font-bold">{t.blog.ctaBoxTitle}</h3>

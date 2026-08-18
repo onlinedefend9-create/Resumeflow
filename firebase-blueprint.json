@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "UserCV": {
+      "title": "User CV",
+      "description": "Stores user CV structure and content.",
+      "type": "object",
+      "properties": {
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "NewsletterSubscriber": {
+      "title": "Newsletter Subscriber",
+      "description": "Stores the email address of a newsletter subscriber.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The subscriber's email address.",
+          "maxLength": 128
+        },
+        "subscribedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of subscription."
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "articleSlug": {
+          "type": "string",
+          "maxLength": 128
+        }
+      },
+      "required": ["email", "subscribedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/cv/data": {
+      "schema": "UserCV",
+      "description": "User CV data"
+    },
+    "/newsletter_subscribers/{subscriberId}": {
+      "schema": "NewsletterSubscriber",
+      "description": "Public subscription records"
+    }
+  }
+}

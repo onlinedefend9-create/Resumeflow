@@ -32,9 +32,9 @@ async function generateContentWithRetryAndFallback(params: any) {
   const modelsToTry = Array.from(new Set([
     params.model, // Primary model requested
     'gemini-2.5-flash',
-    'gemini-2.5-pro',
     'gemini-1.5-flash',
-    'gemini-1.5-pro',
+    'gemini-2.5-pro',
+    'gemini-1.5-pro'
   ].filter(Boolean)));
 
   let lastError: any = null;
@@ -60,20 +60,18 @@ async function generateContentWithRetryAndFallback(params: any) {
         lastError = err;
         console.error(`[Gemini API] Échec de la tentative avec le modèle ${modelName} :`, err.message || err);
         
-        // Check for common temporary error indicators (503, unavailable, high demand, overloaded)
-        const errStr = (JSON.stringify(err).toLowerCase() + ' ' + String(err.message || '').toLowerCase());
-        const isTemporary = errStr.includes('503') || errStr.includes('unavailable') || errStr.includes('high demand') || errStr.includes('overloaded');
+        retries--;
         
-        if (isTemporary) {
-          retries--;
-          if (retries > 0) {
-            console.log(`[Gemini API] Erreur temporaire détectée. Attente de 1 seconde avant nouvel essai...`);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            continue; // Retry with the same model
-          }
+        const errStr = (JSON.stringify(err).toLowerCase() + ' ' + String(err.message || '').toLowerCase());
+        const isTemporary = errStr.includes('503') || errStr.includes('unavailable') || errStr.includes('high demand') || errStr.includes('overloaded') || errStr.includes('timed out') || errStr.includes('timeout');
+        
+        if (isTemporary && retries > 0) {
+          console.log(`[Gemini API] Erreur temporaire ou timeout détecté. Attente de 1 seconde avant nouvel essai...`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          continue; // Retry with the same model
         } else {
-          // If it's a structural syntax/schema error, throw it immediately
-          throw err;
+          // Break out of current model's retry loop to try the next model immediately
+          break;
         }
       }
     }
@@ -607,7 +605,7 @@ async function startServer() {
 
     try {
       const response = await generateContentWithRetryAndFallback({
-        model: 'gemini-3.6-flash',
+        model: 'gemini-2.5-flash',
         contents: [
           `Voici les informations brutes extraites d'un profil ou CV (en texte libre) :\n\n${text}\n\nAnalyse attentivement ce texte et structure-le de façon optimale au format JSON pour remplir un CV professionnel.`
         ],
@@ -706,7 +704,7 @@ Règles de structuration des sections :
 
     try {
       const response = await generateContentWithRetryAndFallback({
-        model: 'gemini-3.6-flash',
+        model: 'gemini-2.5-flash',
         contents: [
           `Voici le contenu du CV structuré au format JSON :\n\n${JSON.stringify(cvData, null, 2)}\n\nAnalyse ce CV par rapport aux exigences des systèmes ATS modernes (Applicant Tracking Systems) et fournis un rapport détaillé en français au format JSON.`
         ],
@@ -879,7 +877,7 @@ Règles de diagnostic :
       console.log(`[Gemini AI Search] Generating simulated real-time job listings from: ${sourcesToGenerate.join(', ')}`);
       
       const response = await generateContentWithRetryAndFallback({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-2.5-flash',
         contents: [
           `Recherche d'offres d'emploi pour le poste "${keywords}" à "${location}" (${country}).\n\nGénère des résultats d'offres d'emploi hyper-réalistes et actuelles comme si elles venaient de l'API de : ${sourcesToGenerate.join(', ')}.`
         ],
@@ -1080,7 +1078,7 @@ Ton rôle est de recevoir du texte brut ou du HTML d'annonces d'emploi et de le 
     try {
       console.log("[JobParser] Parsing via Gemini...");
       const response = await generateContentWithRetryAndFallback({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-2.5-flash',
         contents: [
           `TEXTE A PARSER :\n${rawText}`
         ],
