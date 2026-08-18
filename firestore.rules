@@ -14,7 +14,7 @@ service cloud.firestore {
 
     // Helper functions
     function isValidId(id) { 
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-\\.\\@]+$'); 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-\\.\\@\\+\\:\\$]+$'); 
     }
     
     function incoming() { 
@@ -30,9 +30,32 @@ service cloud.firestore {
         && data.subscribedAt is timestamp;
     }
 
+    function isValidJobAlert(data) {
+      return data.keys().hasAll(['email', 'keywords', 'location', 'country', 'subscribedAt', 'active'])
+        && data.keys().size() <= 6
+        && data.email is string
+        && data.email.size() <= 128
+        && data.email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$')
+        && data.keywords is string
+        && data.keywords.size() <= 128
+        && data.location is string
+        && data.location.size() <= 128
+        && data.country is string
+        && data.country.size() <= 8
+        && data.subscribedAt is timestamp
+        && data.active is bool;
+    }
+
     // Newsletter subscriber rules
     match /newsletter_subscribers/{subscriberId} {
       allow create: if isValidId(subscriberId) && isValidNewsletterSubscriber(incoming());
+      allow read: if false; // Only admin/backend should read it
+      allow update, delete: if false;
+    }
+
+    // Job alerts rules
+    match /job_alerts/{alertId} {
+      allow create: if isValidId(alertId) && isValidJobAlert(incoming());
       allow read: if false; // Only admin/backend should read it
       allow update, delete: if false;
     }

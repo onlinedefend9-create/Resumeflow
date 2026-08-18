@@ -36,6 +36,38 @@
         }
       },
       "required": ["email", "subscribedAt"]
+    },
+    "JobAlert": {
+      "title": "Job Alert",
+      "description": "Stores job search criteria for email alerts.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 128
+        },
+        "keywords": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "location": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "country": {
+          "type": "string",
+          "maxLength": 8
+        },
+        "subscribedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "active": {
+          "type": "boolean"
+        }
+      },
+      "required": ["email", "keywords", "location", "country", "subscribedAt", "active"]
     }
   },
   "firestore": {
@@ -46,6 +78,10 @@
     "/newsletter_subscribers/{subscriberId}": {
       "schema": "NewsletterSubscriber",
       "description": "Public subscription records"
+    },
+    "/job_alerts/{alertId}": {
+      "schema": "JobAlert",
+      "description": "Public job alert configurations"
     }
   }
 }

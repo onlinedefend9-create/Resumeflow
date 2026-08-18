@@ -31,10 +31,10 @@ function getGeminiClient(): GoogleGenAI {
 async function generateContentWithRetryAndFallback(params: any) {
   const modelsToTry = Array.from(new Set([
     params.model, // Primary model requested
+    'gemini-3.7-flash',
+    'gemini-3.1-flash-lite',
     'gemini-2.5-flash',
-    'gemini-1.5-flash',
-    'gemini-2.5-pro',
-    'gemini-1.5-pro'
+    'gemini-3.1-pro-preview'
   ].filter(Boolean)));
 
   let lastError: any = null;
@@ -62,11 +62,39 @@ async function generateContentWithRetryAndFallback(params: any) {
         
         retries--;
         
-        const errStr = (JSON.stringify(err).toLowerCase() + ' ' + String(err.message || '').toLowerCase());
-        const isTemporary = errStr.includes('503') || errStr.includes('unavailable') || errStr.includes('high demand') || errStr.includes('overloaded') || errStr.includes('timed out') || errStr.includes('timeout');
+        let errDetails = '';
+        try {
+          if (err instanceof Error) {
+            errDetails += ' ' + err.message + ' ' + err.stack;
+          }
+          errDetails += ' ' + JSON.stringify(err);
+          errDetails += ' ' + String(err);
+          if (err.status) errDetails += ' status:' + err.status;
+          if (err.code) errDetails += ' code:' + err.code;
+          if (err.message) errDetails += ' message:' + err.message;
+          if (err.error) {
+            errDetails += ' ' + JSON.stringify(err.error);
+            if (err.error.message) errDetails += ' ' + err.error.message;
+            if (err.error.code) errDetails += ' ' + err.error.code;
+            if (err.error.status) errDetails += ' ' + err.error.status;
+          }
+        } catch (e) {
+          errDetails += ' ' + String(err);
+        }
+        errDetails = errDetails.toLowerCase();
+
+        const isTemporary = errDetails.includes('503') || 
+                            errDetails.includes('unavailable') || 
+                            errDetails.includes('high demand') || 
+                            errDetails.includes('overloaded') || 
+                            errDetails.includes('timed out') || 
+                            errDetails.includes('timeout') ||
+                            errDetails.includes('429') ||
+                            errDetails.includes('quota') ||
+                            errDetails.includes('exhausted');
         
         if (isTemporary && retries > 0) {
-          console.log(`[Gemini API] Erreur temporaire ou timeout détecté. Attente de 1 seconde avant nouvel essai...`);
+          console.log(`[Gemini API] Erreur temporaire, quota dépassé ou timeout détecté pour ${modelName}. Attente de 1 seconde avant nouvel essai...`);
           await new Promise(resolve => setTimeout(resolve, 1000));
           continue; // Retry with the same model
         } else {
@@ -605,7 +633,7 @@ async function startServer() {
 
     try {
       const response = await generateContentWithRetryAndFallback({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.7-flash',
         contents: [
           `Voici les informations brutes extraites d'un profil ou CV (en texte libre) :\n\n${text}\n\nAnalyse attentivement ce texte et structure-le de façon optimale au format JSON pour remplir un CV professionnel.`
         ],
@@ -704,7 +732,7 @@ Règles de structuration des sections :
 
     try {
       const response = await generateContentWithRetryAndFallback({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.7-flash',
         contents: [
           `Voici le contenu du CV structuré au format JSON :\n\n${JSON.stringify(cvData, null, 2)}\n\nAnalyse ce CV par rapport aux exigences des systèmes ATS modernes (Applicant Tracking Systems) et fournis un rapport détaillé en français au format JSON.`
         ],
@@ -877,7 +905,7 @@ Règles de diagnostic :
       console.log(`[Gemini AI Search] Generating simulated real-time job listings from: ${sourcesToGenerate.join(', ')}`);
       
       const response = await generateContentWithRetryAndFallback({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.7-flash',
         contents: [
           `Recherche d'offres d'emploi pour le poste "${keywords}" à "${location}" (${country}).\n\nGénère des résultats d'offres d'emploi hyper-réalistes et actuelles comme si elles venaient de l'API de : ${sourcesToGenerate.join(', ')}.`
         ],
@@ -1078,7 +1106,7 @@ Ton rôle est de recevoir du texte brut ou du HTML d'annonces d'emploi et de le 
     try {
       console.log("[JobParser] Parsing via Gemini...");
       const response = await generateContentWithRetryAndFallback({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.7-flash',
         contents: [
           `TEXTE A PARSER :\n${rawText}`
         ],
@@ -1118,6 +1146,37 @@ Ton rôle est de recevoir du texte brut ou du HTML d'annonces d'emploi et de le 
       console.error("[JobParser] Failed to parse using Gemini fallback:", geminiErr);
       return res.status(500).json({ error: "L'analyse par l'IA a échoué : " + (geminiErr.message || geminiErr) });
     }
+  });
+
+  // API Route simulating an HTTPS Firebase Cloud Function for Job Alerts
+  app.post('/api/job-alerts/subscribe', async (req, res) => {
+    const { email, keywords, location, country } = req.body;
+
+    if (!email || !keywords) {
+      return res.status(400).json({ error: "L'email et les mots-clés sont obligatoires pour créer une alerte." });
+    }
+
+    // Valider le format de l'email
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "L'adresse e-mail fournie est invalide." });
+    }
+
+    console.log(`[Firebase Cloud Function] Nouvelle alerte emploi créée pour : ${email} | Mots-clés: "${keywords}" | Ville: "${location}" | Pays: "${country}"`);
+
+    // Nous retournons un statut de succès simulant l'exécution de la fonction Cloud Firebase
+    res.json({
+      success: true,
+      message: "Alerte de recherche d'emploi enregistrée avec succès !",
+      details: {
+        email,
+        keywords,
+        location,
+        country,
+        functionTriggered: "jobAlertsNotifier-onSubscribe",
+        timestamp: new Date().toISOString()
+      }
+    });
   });
 
   // Vite middleware for development
