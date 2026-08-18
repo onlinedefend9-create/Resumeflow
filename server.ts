@@ -45,10 +45,16 @@ async function generateContentWithRetryAndFallback(params: any) {
       try {
         console.log(`[Gemini API] Envoi de la requête au modèle : ${modelName} (tentatives restantes pour ce modèle : ${retries})...`);
         const ai = getGeminiClient();
-        const response = await ai.models.generateContent({
+        const responsePromise = ai.models.generateContent({
           ...params,
           model: modelName,
         });
+        
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Gemini API call timed out")), 15000)
+        );
+        
+        const response = await Promise.race([responsePromise, timeoutPromise]) as any;
         return response;
       } catch (err: any) {
         lastError = err;
@@ -105,6 +111,23 @@ function extractResponseText(response: any): string {
   throw new Error("La réponse de l'IA ne contient aucun texte exploitable.");
 }
 
+// Robust fetch helper with timeout to prevent blocked network calls from hanging the route handlers
+async function fetchWithTimeout(url: string, options: any = {}, timeoutMs = 4000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    return response;
+  } catch (err) {
+    clearTimeout(id);
+    throw err;
+  }
+}
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -148,6 +171,17 @@ async function startServer() {
 
   // Serve JSON parsing middleware
   app.use(express.json());
+
+  // Explicit route to serve Google AdSense ads.txt
+  app.get('/ads.txt', (req, res) => {
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    const adsPath = path.join(process.cwd(), 'public', 'ads.txt');
+    res.sendFile(adsPath, (err) => {
+      if (err) {
+        res.send("google.com, pub-9620855563885512, DIRECT, f08c47fec0942fa0\n");
+      }
+    });
+  });
 
   // API Route for health check
   app.get('/api/health', (req, res) => {
@@ -759,8 +793,10 @@ Règles de diagnostic :
     if (adzunaId && adzunaKey && isAdzunaSupported) {
       try {
         console.log(`[Adzuna API] Fetching jobs for keywords: "${keywords}" in "${location}"`);
-        const response = await fetch(
-          `https://api.adzuna.com/v1/api/jobs/${countryCode}/search/1?app_id=${adzunaId}&app_key=${adzunaKey}&what=${encodeURIComponent(keywords)}&where=${encodeURIComponent(location)}&content-type=application/json`
+        const response = await fetchWithTimeout(
+          `https://api.adzuna.com/v1/api/jobs/${countryCode}/search/1?app_id=${adzunaId}&app_key=${adzunaKey}&what=${encodeURIComponent(keywords)}&where=${encodeURIComponent(location)}&content-type=application/json`,
+          {},
+          4000
         );
         if (response.ok) {
           const data = await response.json() as any;
@@ -796,14 +832,14 @@ Règles de diagnostic :
     if (joobleKey) {
       try {
         console.log(`[Jooble API] Fetching jobs for keywords: "${keywords}" in "${location}"`);
-        const response = await fetch(`https://jooble.org/api/${joobleKey}`, {
+        const response = await fetchWithTimeout(`https://jooble.org/api/${joobleKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             keywords: keywords,
             location: location
           })
-        });
+        }, 4000);
         if (response.ok) {
           const data = await response.json() as any;
           if (data.jobs) {
@@ -1014,7 +1050,7 @@ Ton rôle est de recevoir du texte brut ou du HTML d'annonces d'emploi et de le 
     // 1. Try local Ollama (Phi-3.5)
     try {
       console.log(`[JobParser] Attempting parsing via Ollama at ${ollamaUrl}...`);
-      const response = await fetch(ollamaUrl, {
+      const response = await fetchWithTimeout(ollamaUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1027,7 +1063,7 @@ Ton rôle est de recevoir du texte brut ou du HTML d'annonces d'emploi et de le 
             top_p: 0.5,
           },
         }),
-      });
+      }, 4000);
 
       if (response.ok) {
         const data = await response.json();
