@@ -1,5 +1,5 @@
-// Petit wrapper pour appeler linkedin-jobs-api depuis un projet ESM TypeScript
-type RawJob = {
+// src/lib/linkedinWrapper.ts
+export type RawJob = {
   position?: string;
   company?: string;
   location?: string;
