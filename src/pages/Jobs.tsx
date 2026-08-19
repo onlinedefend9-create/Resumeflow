@@ -36,7 +36,7 @@ export const Jobs: React.FC = () => {
   const [extCountry, setExtCountry] = useState('MA');
   const [externalJobs, setExternalJobs] = useState<ExternalJob[]>([]);
   const [extLoading, setExtLoading] = useState(false);
-  const [extSourceFilter, setExtSourceFilter] = useState<'all' | 'Adzuna' | 'Jooble' | 'Glassdoor'>('all');
+  const [extSourceFilter, setExtSourceFilter] = useState<'all' | 'Adzuna' | 'Jooble' | 'Glassdoor' | 'LinkedIn'>('all');
   const [sortBy, setSortBy] = useState<string>('recent');
   
   // Selected Job for Modal details
@@ -47,7 +47,7 @@ export const Jobs: React.FC = () => {
     if (!extKeywords.trim()) return;
     setExtLoading(true);
     try {
-      const response = await fetch('/api/external-jobs/search', {
+      const searchPromise = fetch('/api/external-jobs/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -55,13 +55,16 @@ export const Jobs: React.FC = () => {
           location: extLocation,
           country: extCountry
         })
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.results) {
-          setExternalJobs(data.results);
-        }
-      }
+      }).then(r => r.ok ? r.json() : { results: [] });
+
+      const linkedinPromise = fetch(`/api/external-jobs/linkedin?keyword=${encodeURIComponent(extKeywords)}&location=${encodeURIComponent(extLocation)}&page=0&limit=20`)
+        .then(r => r.ok ? r.json() : { results: [] });
+
+      const [searchData, linkedinData] = await Promise.all([searchPromise, linkedinPromise]);
+      const mainResults = searchData.results || [];
+      const linkedinResults = linkedinData.results || [];
+
+      setExternalJobs([...mainResults, ...linkedinResults]);
     } catch (err) {
       console.error("Error searching external jobs:", err);
     } finally {
@@ -192,7 +195,8 @@ export const Jobs: React.FC = () => {
               { id: 'all', label: 'Toutes les sources' },
               { id: 'Adzuna', label: 'Adzuna' },
               { id: 'Jooble', label: 'Jooble' },
-              { id: 'Glassdoor', label: 'Glassdoor' }
+              { id: 'Glassdoor', label: 'Glassdoor' },
+              { id: 'LinkedIn', label: 'LinkedIn' }
             ].map((src) => (
               <button
                 key={src.id}

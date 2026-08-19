@@ -5,6 +5,7 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
+import { fetchLinkedinJobs } from "./src/lib/linkedinWrapper.ts";
 
 // Lazy initialization of the Gemini client to avoid crashes if API key is missing on startup
 let aiClient: GoogleGenAI | null = null;
@@ -29,9 +30,14 @@ function getGeminiClient(): GoogleGenAI {
 
 // Robust wrapper to handle temporary model unavailability (e.g. 503 high demand) with retries and fallback models
 async function generateContentWithRetryAndFallback(params: any) {
+  // Intercept and map gemini-3.7-flash to gemini-3.5-flash to avoid high-demand 503 errors on regional endpoints
+  if (params && params.model === 'gemini-3.7-flash') {
+    params.model = 'gemini-3.5-flash';
+  }
+
   const modelsToTry = Array.from(new Set([
     params.model, // Primary model requested
-    'gemini-3.7-flash',
+    'gemini-3.5-flash',
     'gemini-3.1-flash-lite',
     'gemini-2.5-flash',
     'gemini-3.1-pro-preview'
@@ -58,7 +64,7 @@ async function generateContentWithRetryAndFallback(params: any) {
         return response;
       } catch (err: any) {
         lastError = err;
-        console.error(`[Gemini API] Échec de la tentative avec le modèle ${modelName} :`, err.message || err);
+        console.log(`[Gemini API Info] Transition vers un modèle de secours...`);
         
         retries--;
         
@@ -83,18 +89,22 @@ async function generateContentWithRetryAndFallback(params: any) {
         }
         errDetails = errDetails.toLowerCase();
 
+        const isQuotaExceeded = errDetails.includes('429') || 
+                                errDetails.includes('quota') || 
+                                errDetails.includes('exhausted');
+
         const isTemporary = errDetails.includes('503') || 
                             errDetails.includes('unavailable') || 
                             errDetails.includes('high demand') || 
                             errDetails.includes('overloaded') || 
                             errDetails.includes('timed out') || 
-                            errDetails.includes('timeout') ||
-                            errDetails.includes('429') ||
-                            errDetails.includes('quota') ||
-                            errDetails.includes('exhausted');
+                            errDetails.includes('timeout');
         
-        if (isTemporary && retries > 0) {
-          console.log(`[Gemini API] Erreur temporaire, quota dépassé ou timeout détecté pour ${modelName}. Attente de 1 seconde avant nouvel essai...`);
+        if (isQuotaExceeded) {
+          console.log(`[Gemini API Info] Quota dépassé pour ${modelName}. Bascule immédiate vers un autre modèle de secours...`);
+          break; // Do not retry the same model, go straight to next model in list
+        } else if (isTemporary && retries > 0) {
+          console.log(`[Gemini API Info] Erreur temporaire ou timeout détecté pour ${modelName}. Attente de 1 seconde avant nouvel essai...`);
           await new Promise(resolve => setTimeout(resolve, 1000));
           continue; // Retry with the same model
         } else {
@@ -633,7 +643,7 @@ async function startServer() {
 
     try {
       const response = await generateContentWithRetryAndFallback({
-        model: 'gemini-3.7-flash',
+        model: 'gemini-3.5-flash',
         contents: [
           `Voici les informations brutes extraites d'un profil ou CV (en texte libre) :\n\n${text}\n\nAnalyse attentivement ce texte et structure-le de façon optimale au format JSON pour remplir un CV professionnel.`
         ],
@@ -732,7 +742,7 @@ Règles de structuration des sections :
 
     try {
       const response = await generateContentWithRetryAndFallback({
-        model: 'gemini-3.7-flash',
+        model: 'gemini-3.5-flash',
         contents: [
           `Voici le contenu du CV structuré au format JSON :\n\n${JSON.stringify(cvData, null, 2)}\n\nAnalyse ce CV par rapport aux exigences des systèmes ATS modernes (Applicant Tracking Systems) et fournis un rapport détaillé en français au format JSON.`
         ],
@@ -905,7 +915,7 @@ Règles de diagnostic :
       console.log(`[Gemini AI Search] Generating simulated real-time job listings from: ${sourcesToGenerate.join(', ')}`);
       
       const response = await generateContentWithRetryAndFallback({
-        model: 'gemini-3.7-flash',
+        model: 'gemini-3.5-flash',
         contents: [
           `Recherche d'offres d'emploi pour le poste "${keywords}" à "${location}" (${country}).\n\nGénère des résultats d'offres d'emploi hyper-réalistes et actuelles comme si elles venaient de l'API de : ${sourcesToGenerate.join(', ')}.`
         ],
@@ -1028,6 +1038,66 @@ Le format de sortie attendu est un tableau d'objets JSON STRICT avec la structur
     }
   });
 
+  // -- Début : LinkedIn jobs integration
+  const linkedinCache = new Map<string, { data: any[]; ts: number }>();
+  const LINKEDIN_CACHE_TTL_MS = 1000 * 60 * 60; // 1 heure
+
+  function getLinkedinCache(key: string) {
+    const v = linkedinCache.get(key);
+    if (!v) return null;
+    if (Date.now() - v.ts > LINKEDIN_CACHE_TTL_MS) {
+      linkedinCache.delete(key);
+      return null;
+    }
+    return v.data;
+  }
+  function setLinkedinCache(key: string, data: any[]) {
+    linkedinCache.set(key, { data, ts: Date.now() });
+  }
+
+  app.get('/api/external-jobs/linkedin', async (req, res) => {
+    const keyword = String(req.query.keyword || '');
+    const location = String(req.query.location || '');
+    const page = Number(req.query.page ?? 0);
+    const limit = Number(req.query.limit ?? 25);
+    const host = req.query.host ? String(req.query.host) : undefined;
+
+    const cacheKey = `lnkd:${keyword}:${location}:p${page}:l${limit}:h${host||''}`;
+    const cached = getLinkedinCache(cacheKey);
+    if (cached) return res.json({ success: true, source: 'cache', count: cached.length, results: cached });
+
+    try {
+      const jobs = await fetchLinkedinJobs({ keyword, location, page, limit, host });
+      const normalizedJobs = jobs.map(j => ({
+        title: j.title || 'Offre d\'emploi',
+        company: j.company || 'Confidentiel',
+        city: j.city || location || 'Maroc',
+        region: 'Région locale',
+        country: 'MA',
+        contract_type: 'CDI',
+        experience_level: 'Mid',
+        description: `Offre d'emploi publiée sur LinkedIn. Postulez pour découvrir les détails du poste et rejoindre ${j.company || 'l\'entreprise'}.`,
+        skills: [keyword].filter(Boolean),
+        is_remote: (j.title || '').toLowerCase().includes('remote') || (j.title || '').toLowerCase().includes('télé') || (j.title || '').toLowerCase().includes('tele'),
+        source: 'LinkedIn' as const,
+        source_url: j.url || 'https://www.linkedin.com',
+        salary: j.salary || undefined,
+        company_rating: 4.1,
+        logo: j.logo || null
+      }));
+      setLinkedinCache(cacheKey, normalizedJobs);
+      res.json({ success: true, source: 'linkedin', count: normalizedJobs.length, results: normalizedJobs });
+    } catch (err: any) {
+      console.error('LinkedIn fetch error:', err);
+      const msg = String(err?.message || err);
+      if (msg.toLowerCase().includes('rate limit') || msg.includes('429')) {
+        return res.status(429).json({ error: 'Rate limit reached from LinkedIn' });
+      }
+      res.status(500).json({ error: 'Failed to fetch LinkedIn jobs', detail: msg });
+    }
+  });
+  // -- Fin : LinkedIn jobs integration
+
   // API to parse raw job text with Phi (Ollama) or fallback to Gemini
   app.post('/api/jobs/parse', async (req, res) => {
     const { rawText, ollamaUrl = 'http://localhost:11434/api/generate' } = req.body;
@@ -1106,7 +1176,7 @@ Ton rôle est de recevoir du texte brut ou du HTML d'annonces d'emploi et de le 
     try {
       console.log("[JobParser] Parsing via Gemini...");
       const response = await generateContentWithRetryAndFallback({
-        model: 'gemini-3.7-flash',
+        model: 'gemini-3.5-flash',
         contents: [
           `TEXTE A PARSER :\n${rawText}`
         ],

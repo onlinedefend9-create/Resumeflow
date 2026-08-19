@@ -52,24 +52,32 @@ export const AdSenseBanner = ({
     }
   }, [adClient, adSlot]);
 
-  // Déterminer la taille du conteneur en fonction du format pour éviter le Layout Shift (CLS)
-  const getMinHeight = () => {
+  // Déterminer les classes de dimensionnement et de visibilité adaptatives pour éviter le CLS (Cumulative Layout Shift)
+  const getResponsiveContainerClasses = () => {
     switch (adFormat) {
-      case 'horizontal': return 'h-[90px]';
-      case 'vertical': return 'h-[600px] w-[160px]';
-      case 'rectangle': return 'h-[250px]';
-      default: return 'h-[100px] md:h-[120px]';
+      case 'horizontal':
+        // Grand format horizontal sur grand écran, plus compact sur mobile
+        return 'h-[140px] md:h-[90px] w-full';
+      case 'vertical':
+        // Masquer le format vertical sur mobile pour éviter les débordements (horizontal overflow), ne l'afficher que sur tablette et desktop
+        return 'hidden sm:block h-[600px] w-[160px] mx-auto';
+      case 'rectangle':
+        // Format rectangulaire standard (300x250 sur mobile, 336x280 sur desktop)
+        return 'h-[250px] w-full max-w-[300px] md:max-w-[336px] md:h-[280px] mx-auto';
+      default:
+        // Format 'auto' adaptatif intelligent par défaut
+        return 'h-[150px] md:h-[120px] w-full';
     }
   };
 
   return (
     <div 
       ref={adRef}
-      className={`relative w-full overflow-hidden border border-zinc-200/60 dark:border-zinc-800/60 rounded-2xl bg-zinc-50/50 dark:bg-zinc-900/30 p-4 transition-all ${getMinHeight()} ${className}`}
+      className={`relative overflow-hidden border border-zinc-200/60 dark:border-zinc-800/60 rounded-2xl bg-zinc-50/50 dark:bg-zinc-900/30 p-4 transition-all flex flex-col justify-between ${getResponsiveContainerClasses()} ${className}`}
     >
       {/* Label de signalisation publicitaire requis par Google AdSense */}
-      <div className="absolute top-2 left-4 flex items-center gap-1.5">
-        <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+      <div className="flex items-center gap-1.5 z-10">
+        <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
           Sponsorisé
         </span>
         <Sparkles className="w-2.5 h-2.5 text-indigo-500 dark:text-indigo-400 opacity-60" />
@@ -77,22 +85,20 @@ export const AdSenseBanner = ({
 
       {/* Mode Simulation / Démo pour le preview d'AI Studio */}
       {adClient === 'ca-pub-simulated' || isAdBlockActive ? (
-        <div className="w-full h-full flex flex-col items-center justify-center text-center pt-2">
-          <div className="max-w-md px-4">
-            <h4 className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest">
-              Emplacement AdSense {adFormat.toUpperCase()}
-            </h4>
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1">
-              ID Client : <code className="bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded text-[9px]">{adClient}</code> • Slot : <code className="bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded text-[9px]">{adSlot}</code>
-            </p>
-            <p className="text-[9px] text-zinc-400/80 dark:text-zinc-600/80 mt-1.5 leading-relaxed">
-              Ce bloc simule fidèlement l'emplacement de votre annonce Google AdSense. En production, le script officiel est automatiquement chargé avec vos identifiants pour diffuser des annonces réelles.
-            </p>
-          </div>
+        <div className="w-full h-full flex flex-col items-center justify-center text-center px-2 py-1">
+          <h4 className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest">
+            AdSense {adFormat.toUpperCase()}
+          </h4>
+          <p className="text-[9px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+            Client : <code className="bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded text-[8px]">{adClient}</code>
+          </p>
+          <p className="text-[8px] text-zinc-400/80 dark:text-zinc-600/80 mt-1 max-w-sm leading-relaxed hidden xs:block">
+            Mise en page réactive optimisée pour mobile et desktop. Le script se charge automatiquement en production.
+          </p>
         </div>
       ) : (
         /* Code officiel AdSense */
-        <div className="w-full h-full flex items-center justify-center pt-4">
+        <div className="w-full h-full flex items-center justify-center pt-2">
           <ins
             className="adsbygoogle"
             style={{ display: 'block', width: '100%', height: '100%' }}

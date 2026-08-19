@@ -11,14 +11,14 @@ export interface ExternalJob {
   description: string;
   skills: string[];
   is_remote: boolean;
-  source: 'Adzuna' | 'Jooble' | 'Glassdoor';
+  source: 'Adzuna' | 'Jooble' | 'Glassdoor' | 'LinkedIn';
   source_url: string;
   salary?: string;
   company_rating?: number;
 }
 
 export type UnifiedJob = JobOffer & Partial<Omit<ExternalJob, keyof JobOffer>> & {
-  source?: 'Adzuna' | 'Jooble' | 'Glassdoor' | 'ResumeFlow';
+  source?: 'Adzuna' | 'Jooble' | 'Glassdoor' | 'LinkedIn' | 'ResumeFlow';
   source_url?: string;
   salary?: string;
   company_rating?: number;
