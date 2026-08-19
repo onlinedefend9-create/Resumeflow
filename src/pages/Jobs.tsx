@@ -38,6 +38,7 @@ export const Jobs: React.FC = () => {
   const [extLoading, setExtLoading] = useState(false);
   const [extSourceFilter, setExtSourceFilter] = useState<'all' | 'Adzuna' | 'Jooble' | 'Glassdoor' | 'LinkedIn'>('all');
   const [sortBy, setSortBy] = useState<string>('recent');
+  const [linkedinSource, setLinkedinSource] = useState<'cache' | 'linkedin' | null>(null);
   
   // Selected Job for Modal details
   const [selectedJob, setSelectedJob] = useState<UnifiedJob | null>(null);
@@ -65,8 +66,15 @@ export const Jobs: React.FC = () => {
       const linkedinResults = linkedinData.results || [];
 
       setExternalJobs([...mainResults, ...linkedinResults]);
+      
+      if (linkedinData && linkedinData.success) {
+        setLinkedinSource(linkedinData.source);
+      } else {
+        setLinkedinSource(null);
+      }
     } catch (err) {
       console.error("Error searching external jobs:", err);
+      setLinkedinSource(null);
     } finally {
       setExtLoading(false);
     }
@@ -201,16 +209,39 @@ export const Jobs: React.FC = () => {
               <button
                 key={src.id}
                 onClick={() => setExtSourceFilter(src.id as any)}
-                className={`text-xs px-3.5 py-1.5 rounded-full border transition-all font-semibold cursor-pointer ${
+                className={`text-xs px-3.5 py-1.5 rounded-full border transition-all font-semibold cursor-pointer flex items-center gap-2 ${
                   extSourceFilter === src.id
                     ? 'bg-[#0a0a0a] border-zinc-900 text-white dark:bg-white dark:text-zinc-950 dark:border-white'
                     : 'bg-zinc-50 border-zinc-200 text-zinc-600 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300'
                 }`}
               >
                 {src.label}
+                {src.id === 'LinkedIn' && linkedinSource && (
+                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-extrabold uppercase tracking-wider ${
+                    linkedinSource === 'cache'
+                      ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200/20'
+                      : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/20'
+                  }`}>
+                    {linkedinSource === 'cache' ? '⚡ Cache' : '🟢 Live'}
+                  </span>
+                )}
               </button>
             ))}
           </div>
+          
+          {linkedinSource && (
+            <div className="mt-3 text-xs text-zinc-400 dark:text-zinc-500 flex items-center gap-2 bg-zinc-50/50 dark:bg-zinc-800/20 border border-zinc-100 dark:border-zinc-800/30 rounded-xl p-3 animate-fade-in">
+              <span className={`inline-block w-2.5 h-2.5 rounded-full ${
+                linkedinSource === 'cache' ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500 animate-pulse'
+              }`}></span>
+              <span>
+                {linkedinSource === 'cache' 
+                  ? "Les dernières offres LinkedIn ont été chargées instantanément depuis le cache d'API local (TTL 1h)."
+                  : "Les dernières offres LinkedIn ont été récupérées en temps réel depuis l'API officielle de LinkedIn."
+                }
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Formulaire d'alerte mail Firebase Cloud Function */}
