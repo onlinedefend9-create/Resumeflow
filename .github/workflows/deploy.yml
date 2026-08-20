@@ -46,8 +46,8 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           
-          # Remplacez 'votre-pseudo' et 'nom-de-votre-space' par vos identifiants Hugging Face
-          git remote add hf https://onlinedefend9:$HF_TOKEN@huggingface.co/spaces/onlinedefend9/nom-de-votre-space
+          # Connexion automatique à votre nouveau Space YounY99
+          git remote add hf https://YounY99:$HF_TOKEN@huggingface.co/spaces/YounY99/robot-scraper-claw
           
           # Envoi forcé de votre code vers le Space Hugging Face
           git push --force hf main
