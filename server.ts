@@ -6,6 +6,24 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import { fetchLinkedinJobs } from "./src/lib/linkedinWrapper.ts";
+import { createClient } from "@supabase/supabase-js";
+
+let supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "https://egszycbulbqgnaiuqdoq.supabase.co";
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnc3p5Y2J1bGJxZ25haXVxZG9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzMTczODIsImV4cCI6MjEwMDg5MzM4Mn0.GzHZSp5kDsql-h2T7QEYG61uBE1Dx9I-9ECUEsLTtQo";
+
+try {
+  const parts = supabaseAnonKey.split('.');
+  if (parts.length === 3) {
+    const decoded = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+    if (decoded && decoded.ref) {
+      supabaseUrl = `https://${decoded.ref}.supabase.co`;
+    }
+  }
+} catch (err) {
+  console.warn("[Supabase] Impossible de décoder la clé, utilisation de l'URL par défaut :", err);
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Lazy initialization of the Gemini client to avoid crashes if API key is missing on startup
 let aiClient: GoogleGenAI | null = null;
@@ -1067,7 +1085,9 @@ Le format de sortie attendu est un tableau d'objets JSON STRICT avec la structur
     if (cached) return res.json({ success: true, source: 'cache', count: cached.length, results: cached });
 
     try {
+      console.log(`[LinkedIn] Tentative de récupération en direct de LinkedIn : ${keyword} @ ${location}...`);
       const jobs = await fetchLinkedinJobs({ keyword, location, page, limit, host });
+      
       const normalizedJobs = jobs.map(j => ({
         title: j.title || 'Offre d\'emploi',
         company: j.company || 'Confidentiel',
@@ -1085,15 +1105,84 @@ Le format de sortie attendu est un tableau d'objets JSON STRICT avec la structur
         company_rating: 4.1,
         logo: j.logo || null
       }));
+
+      // Sauvegarder les offres récupérées dans la base de données Supabase de manière transparente
+      if (normalizedJobs.length > 0) {
+        console.log(`[LinkedIn] Historisation de ${normalizedJobs.length} offres dans la base Supabase...`);
+        try {
+          const dbJobs = normalizedJobs.map(job => ({
+            title: job.title,
+            company: job.company,
+            city: job.city,
+            date: job.salary || null,
+            salary: job.salary || null,
+            url: job.source_url,
+            logo: job.logo,
+            source: 'LinkedIn'
+          }));
+
+          const { error } = await supabase
+            .from('linkedin_jobs')
+            .upsert(dbJobs, { onConflict: 'url' });
+
+          if (error) {
+            console.error("[LinkedIn Supabase Upsert Warning]:", error.message);
+          } else {
+            console.log(`[LinkedIn Supabase Upsert Success]: Historisation réussie !`);
+          }
+        } catch (dbErr) {
+          console.error("[LinkedIn DB Saving Warning]:", dbErr);
+        }
+      }
+
       setLinkedinCache(cacheKey, normalizedJobs);
       res.json({ success: true, source: 'linkedin', count: normalizedJobs.length, results: normalizedJobs });
     } catch (err: any) {
-      console.error('LinkedIn fetch error:', err);
-      const msg = String(err?.message || err);
-      if (msg.toLowerCase().includes('rate limit') || msg.includes('429')) {
-        return res.status(429).json({ error: 'Rate limit reached from LinkedIn' });
+      console.warn('[LinkedIn Fetch Warning] API bloquée ou rate-limited. Fallback automatique sur la base de données historisée...', err.message || err);
+      
+      // FALLBACK DE SÉCURITÉ : Lire depuis la base de données historisée Supabase !
+      try {
+        console.log(`[LinkedIn Fallback DB] Lecture des offres de la base Supabase pour "${keyword}" @ "${location}"...`);
+        let query = supabase.from('linkedin_jobs').select('*');
+        
+        if (keyword) {
+          query = query.ilike('title', `%${keyword}%`);
+        }
+        if (location) {
+          query = query.ilike('city', `%${location}%`);
+        }
+        
+        const { data: dbResults, error } = await query.order('created_at', { ascending: false }).limit(limit);
+        
+        if (error) throw error;
+
+        if (dbResults && dbResults.length > 0) {
+          const mappedDbResults = dbResults.map(j => ({
+            title: j.title || 'Offre d\'emploi',
+            company: j.company || 'Confidentiel',
+            city: j.city || location || 'Maroc',
+            region: 'Région locale',
+            country: 'MA',
+            contract_type: 'CDI',
+            experience_level: 'Mid',
+            description: `Offre d'emploi historique enregistrée depuis LinkedIn. Postulez pour découvrir les détails.`,
+            skills: [keyword].filter(Boolean),
+            is_remote: (j.title || '').toLowerCase().includes('remote') || (j.title || '').toLowerCase().includes('télé') || (j.title || '').toLowerCase().includes('tele'),
+            source: 'LinkedIn' as const,
+            source_url: j.url || 'https://www.linkedin.com',
+            salary: j.salary || undefined,
+            company_rating: 4.1,
+            logo: j.logo || null
+          }));
+
+          setLinkedinCache(cacheKey, mappedDbResults);
+          return res.json({ success: true, source: 'cache', count: mappedDbResults.length, results: mappedDbResults });
+        }
+      } catch (fallbackErr: any) {
+        console.error('[LinkedIn Fallback DB Error]:', fallbackErr);
       }
-      res.status(500).json({ error: 'Failed to fetch LinkedIn jobs', detail: msg });
+
+      res.json({ success: true, source: 'linkedin', count: 0, results: [] });
     }
   });
   // -- Fin : LinkedIn jobs integration
