@@ -7,6 +7,7 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import { fetchLinkedinJobs } from "./src/lib/linkedinWrapper.ts";
 import { createClient } from "@supabase/supabase-js";
+import { scrapeLinkedinJobsLightweight, jobsDb } from "./scripts/scrape-linkedin-lightweight.ts";
 
 let supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "https://egszycbulbqgnaiuqdoq.supabase.co";
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnc3p5Y2J1bGJxZ25haXVxZG9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzMTczODIsImV4cCI6MjEwMDg5MzM4Mn0.GzHZSp5kDsql-h2T7QEYG61uBE1Dx9I-9ECUEsLTtQo";
@@ -1186,6 +1187,79 @@ Le format de sortie attendu est un tableau d'objets JSON STRICT avec la structur
     }
   });
   // -- Fin : LinkedIn jobs integration
+
+  // -- Début : Scraped Jobs API Route
+  app.get('/api/scraped-jobs', async (req, res) => {
+    const q = String(req.query.q || '');
+    const city = String(req.query.city || '');
+    const source = String(req.query.source || '');
+    const limit = Number(req.query.limit ?? 50);
+
+    try {
+      let query = supabase.from('scraped_jobs').select('*');
+
+      if (q) {
+        query = query.ilike('title', `%${q}%`);
+      }
+      if (city) {
+        query = query.ilike('city', `%${city}%`);
+      }
+      if (source) {
+        query = query.eq('source', source);
+      }
+
+      const { data, error } = await query
+        .order('scraped_at', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        throw error;
+      }
+
+      res.json({
+        success: true,
+        count: data ? data.length : 0,
+        results: data || []
+      });
+    } catch (err: any) {
+      console.error('❌ Erreur lors de la récupération des offres scrapées :', err.message || err);
+      res.status(500).json({
+        success: false,
+        error: 'Impossible de récupérer les offres d\'emploi scrapées.',
+        detail: err.message || err
+      });
+    }
+  });
+  // -- Fin : Scraped Jobs API Route
+
+  // -- Début : FastAPI-equivalent API Routes for status & jobs cache
+  app.get('/api/status', (req, res) => {
+    res.json({
+      status: jobsDb.status,
+      last_updated: jobsDb.lastUpdated,
+      count: jobsDb.data.length
+    });
+  });
+
+  app.get('/api/jobs', (req, res) => {
+    res.json(jobsDb.data);
+  });
+
+  // Lancement automatique du scraper léger en arrière-plan (équivalent du thread-loop Python)
+  const runBackgroundScraper = async () => {
+    console.log("[SCRAPER BACKGROUND] Lancement de la boucle de fond autonome (cycles d'une heure)...");
+    while (true) {
+      try {
+        await scrapeLinkedinJobsLightweight("Python Developer", "France");
+      } catch (err: any) {
+        console.error("[SCRAPER BACKGROUND CRASH] Erreur lors du cycle de fond :", err.message || err);
+      }
+      // Attente d'une heure (3600000ms) avant le prochain cycle
+      await new Promise((resolve) => setTimeout(resolve, 3600000));
+    }
+  };
+  runBackgroundScraper();
+  // -- Fin : FastAPI-equivalent API Routes for status & jobs cache
 
   // API to parse raw job text with Phi (Ollama) or fallback to Gemini
   app.post('/api/jobs/parse', async (req, res) => {

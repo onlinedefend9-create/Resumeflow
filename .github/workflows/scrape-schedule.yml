@@ -1,0 +1,36 @@
+name: Scheduled Job Scraping Worker
+
+on:
+  schedule:
+    # S'exécute toutes les 30 minutes
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # Autorise l'exécution manuelle depuis l'interface GitHub
+
+jobs:
+  scrape-and-sync:
+    name: Run Scraping & Synchronize Supabase
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Project Dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers and System Dependencies
+        run: npx playwright install chromium --with-deps
+
+      - name: Execute Scraping Orchestrator
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SCRAPE_LIMIT: 30
+          SKIP_ROBOTS_CHECK: false
+        run: npx tsx scripts/scrape-all.ts

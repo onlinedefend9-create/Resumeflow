@@ -1,0 +1,34 @@
+# Image de base ultra-légère basée sur Node 20
+FROM mcr.microsoft.com/playwright:v1.40.0-jammy
+
+# Définition du répertoire de travail
+WORKDIR /app
+
+# Copie des fichiers de configuration
+COPY package*.json ./
+
+# Installation des dépendances du projet
+RUN npm ci
+
+# Installation des navigateurs requis par Playwright (Chromium uniquement pour optimiser le poids)
+RUN npx playwright install chromium --with-deps
+
+# Copie de l'intégralité du code et des scripts
+COPY . .
+
+# Configuration de l'environnement de production par défaut
+ENV NODE_ENV=production
+ENV SKIP_ROBOTS_CHECK=false
+
+# L'utilisateur non-root par défaut de Playwright pour des raisons de sécurité
+USER pwuser
+
+# Lancement par défaut de l'orchestrateur de scraping
+CMD ["npx", "tsx", "scripts/scrape-all.ts"]
+
+# --- NOTES DE DÉPLOIEMENT ---
+# Pour compiler ce conteneur :
+#   docker build -t resumeflow-scraper -f Dockerfile.scraper .
+#
+# Pour l'exécuter localement avec vos secrets Supabase :
+#   docker run --rm -e SUPABASE_URL=your_url -e SUPABASE_SERVICE_ROLE_KEY=your_key resumeflow-scraper
