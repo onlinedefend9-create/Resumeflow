@@ -56,10 +56,19 @@ export const Jobs: React.FC = () => {
           location: extLocation,
           country: extCountry
         })
-      }).then(r => r.ok ? r.json() : { results: [] });
+      })
+        .then(r => r.ok ? r.json() : { results: [] })
+        .catch(err => {
+          console.warn("External search query failed gracefully:", err);
+          return { results: [] };
+        });
 
       const linkedinPromise = fetch(`/api/external-jobs/linkedin?keyword=${encodeURIComponent(extKeywords)}&location=${encodeURIComponent(extLocation)}&page=0&limit=20`)
-        .then(r => r.ok ? r.json() : { results: [] });
+        .then(r => r.ok ? r.json() : { results: [] })
+        .catch(err => {
+          console.warn("LinkedIn search query failed gracefully:", err);
+          return { results: [] };
+        });
 
       const [searchData, linkedinData] = await Promise.all([searchPromise, linkedinPromise]);
       const mainResults = searchData.results || [];

@@ -1087,7 +1087,15 @@ Le format de sortie attendu est un tableau d'objets JSON STRICT avec la structur
 
     try {
       console.log(`[LinkedIn] Tentative de récupération en direct de LinkedIn : ${keyword} @ ${location}...`);
-      const jobs = await fetchLinkedinJobs({ keyword, location, page, limit, host });
+      
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error("LinkedIn API query timed out")), 5000)
+      );
+      
+      const jobs = await Promise.race([
+        fetchLinkedinJobs({ keyword, location, page, limit, host }),
+        timeoutPromise
+      ]) as any[];
       
       const normalizedJobs = jobs.map(j => ({
         title: j.title || 'Offre d\'emploi',
