@@ -26,8 +26,8 @@ async function runAllScrapers() {
   console.log("🏁 Démarrage de l'orchestrateur de scraping général...");
   
   const scrapers = [
-    path.join(process.cwd(), "scripts", "scrape-linkedin.ts"),
-    path.join(process.cwd(), "scripts", "scrape-linkedin-lightweight.ts")
+    path.join(process.cwd(), "scripts", "scrape-linkedin-lightweight.ts"),
+    path.join(process.cwd(), "scripts", "scrape-jobs.ts")
   ];
 
   for (const scraper of scrapers) {

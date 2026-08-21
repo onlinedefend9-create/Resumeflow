@@ -11,7 +11,9 @@
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
     "sync-linkedin": "tsx scripts/sync-linkedin.ts",
-    "sync-linkedin-lightweight": "tsx scripts/scrape-linkedin-lightweight.ts"
+    "sync-linkedin-lightweight": "tsx scripts/scrape-linkedin-lightweight.ts",
+    "sync-adzuna": "tsx scripts/scrape-jobs.ts",
+    "sync-all": "tsx scripts/scrape-all.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
