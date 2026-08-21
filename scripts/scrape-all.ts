@@ -45,3 +45,5 @@ runAllScrapers().catch(e => {
   console.error("❌ Erreur fatale dans l'orchestrateur :", e);
   process.exit(1);
 });
+
+process.exit(0);
